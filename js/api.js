@@ -9,7 +9,7 @@ function attesa_(ms) {
 // di volte prima di lasciarla fallire: molto più veloce che aspettare l'intero
 // ciclo della coda offline (8s) per un semplice inciampo di rete Google.
 async function fetchJson_(url, options, tentativi) {
-  tentativi = tentativi || 3;
+  tentativi = tentativi || 5;
   let ultimoErrore;
   for (let i = 0; i < tentativi; i++) {
     try {
