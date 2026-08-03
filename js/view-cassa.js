@@ -101,9 +101,12 @@ function renderCassa(container) {
 
   contantiInput.addEventListener('input', () => aggiornaResto(totaleOrdine()));
 
+  const erroreRegistra = el('div', { class: 'errore nascosto' }, []);
+
   const bottoneRegistra = el('button', {
     class: 'bottone-primario bottone-grande',
     onclick: async () => {
+      erroreRegistra.classList.add('nascosto');
       const righe = listino
         .filter((p) => (ordine[p.piatto_id] || 0) > 0)
         .map((p) => ({
@@ -134,7 +137,22 @@ function renderCassa(container) {
         righe
       };
 
-      await Queue.add(vendita);
+      bottoneRegistra.disabled = true;
+      try {
+        // Se questo fallisce la vendita non è stata messa in coda da nessuna
+        // parte: senza catch l'ordine resterebbe a schermo senza che nulla
+        // segnali al cassiere che non è stato registrato niente.
+        await Queue.add(vendita);
+      } catch (err) {
+        erroreRegistra.textContent = 'Vendita NON registrata: memoria del dispositivo non disponibile. Segna l\'ordine su carta e avvisa il tesoriere.';
+        erroreRegistra.classList.remove('nascosto');
+        return;
+      } finally {
+        bottoneRegistra.disabled = false;
+      }
+
+      // Da qui in poi la vendita è al sicuro in coda: trySync inghiotte già i
+      // propri errori e ritenta in background, quindi non va atteso.
       Queue.trySync();
 
       aggiornaOrdine({});
@@ -157,6 +175,7 @@ function renderCassa(container) {
     totaleEl,
     contantiInput,
     restoEl,
+    erroreRegistra,
     el('div', { class: 'azioni-ordine' }, [bottonePulisci, bottoneRegistra])
   ]));
   radice.appendChild(segnalazione);

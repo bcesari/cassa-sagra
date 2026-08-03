@@ -106,14 +106,28 @@ function disegnaForm(corpo, edizione, piattiEsistenti) {
         coefficiente_persone_ordine: parseFloat(coefficienteInput.value),
         piatti: righe
       };
-      const res = await Api.salvaListino(payload);
-      messaggio.classList.remove('nascosto');
-      if (res.ok) {
-        messaggio.textContent = 'Listino salvato correttamente.';
-        messaggio.classList.remove('errore');
-      } else {
-        messaggio.textContent = res.error || 'Errore nel salvataggio';
+      bottoneSalva.disabled = true;
+      bottoneSalva.textContent = 'Salvataggio in corso…';
+      try {
+        const res = await Api.salvaListino(payload);
+        messaggio.classList.remove('nascosto');
+        if (res.ok) {
+          messaggio.textContent = 'Listino salvato correttamente.';
+          messaggio.classList.remove('errore');
+        } else {
+          messaggio.textContent = res.error || 'Errore nel salvataggio';
+          messaggio.classList.add('errore');
+        }
+      } catch (err) {
+        // Senza questo catch, se tutti i tentativi di rete falliscono la
+        // promise va in rejection senza mostrare nulla: il pulsante sembra
+        // non fare niente e non si capisce se il listino sia stato salvato.
+        messaggio.textContent = 'Connessione al server non riuscita: listino NON salvato, riprova.';
         messaggio.classList.add('errore');
+        messaggio.classList.remove('nascosto');
+      } finally {
+        bottoneSalva.disabled = false;
+        bottoneSalva.textContent = 'Salva listino';
       }
     }
   }, ['Salva listino']);
