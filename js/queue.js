@@ -86,17 +86,35 @@ const Queue = (function () {
     listeners.push(fn);
   }
 
+  const MAX_INVII_PARALLELI = 3;
+
+  // Concorrenza limitata, non illimitata: il backend serializza comunque
+  // tutte le scritture su un unico LockService — sparare in parallelo TUTTE
+  // le vendite in coda (es. 10-20 dopo un test a raffica) affolla la coda del
+  // lock, e con il retry aggressivo lato client (che abbandona un tentativo
+  // lento e ne lancia subito un altro) si rischia di peggiorare la
+  // contesa invece di risolverla. Un pool con un numero massimo di richieste
+  // in volo alla volta mantiene comunque il vantaggio di non processare le
+  // vendite una dopo l'altra in sequenza pura.
+  async function elaboraConLimite_(elementi, limite, fn) {
+    let indice = 0;
+    async function worker() {
+      while (indice < elementi.length) {
+        const i = indice++;
+        await fn(elementi[i]);
+      }
+    }
+    const workers = [];
+    for (let w = 0; w < Math.min(limite, elementi.length); w++) workers.push(worker());
+    await Promise.all(workers);
+  }
+
   async function trySync() {
     if (syncing) return;
     syncing = true;
     try {
       const pending = await getAll();
-      // In parallelo, non in sequenza: ogni vendita è indipendente (dedup
-      // server-side su vendita_id), quindi con più vendite in coda il tempo
-      // totale è quello della più lenta, non la somma di tutte — con 4+
-      // vendite ferme una dietro l'altra, processarle in sequenza con retry
-      // individuali poteva far salire l'attesa a diversi minuti.
-      await Promise.allSettled(pending.map(async (vendita) => {
+      await elaboraConLimite_(pending, MAX_INVII_PARALLELI, async (vendita) => {
         try {
           const res = await Api.registraVendita(vendita);
           if (res && res.ok) {
@@ -105,7 +123,7 @@ const Queue = (function () {
         } catch (err) {
           // resta in coda, ritentata al prossimo giro
         }
-      }));
+      });
     } finally {
       syncing = false;
     }

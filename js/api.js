@@ -6,17 +6,26 @@ function attesa_(ms) {
 // per essere occasionalmente lenta/instabile (richieste che impiegano 10-15s
 // e falliscono, contro l'1-2s normale) — un limite della piattaforma, non
 // del nostro codice. Aspettare fino in fondo un tentativo lento prima di
-// ritentare fa sommare i ritardi (con più chiamate in sequenza diventa
-// "un'eternità"): ogni tentativo viene quindi interrotto dopo TIMEOUT_MS e
-// si passa subito al successivo, che nella maggioranza dei casi è veloce.
-const FETCH_TIMEOUT_MS = 4000;
+// ritentare fa sommare i ritardi: ogni tentativo viene quindi interrotto dopo
+// un timeout e si passa al successivo.
+//
+// Le letture (GET) non hanno contesa di lock lato server: un timeout breve +
+// molti tentativi è la strategia giusta (abbandona un inciampo isolato,
+// riprova subito). Le scritture (POST) invece passano da LockService, che
+// sotto raffiche di più vendite quasi simultanee può far aspettare
+// legittimamente il proprio turno: un timeout troppo corto lì abbandonerebbe
+// un tentativo che stava solo aspettando in coda, aggiungendone un altro
+// nella stessa coda — serve un timeout più paziente e meno tentativi.
+const TIMEOUT_LETTURA_MS = 4000;
+const TIMEOUT_SCRITTURA_MS = 15000;
 
-async function fetchJson_(url, options, tentativi) {
+async function fetchJson_(url, options, tentativi, timeoutMs) {
   tentativi = tentativi || 5;
+  timeoutMs = timeoutMs || TIMEOUT_LETTURA_MS;
   let ultimoErrore;
   for (let i = 0; i < tentativi; i++) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const res = await fetch(url, Object.assign({}, options, { signal: controller.signal }));
       const testo = await res.text();
@@ -57,7 +66,7 @@ const Api = {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(body)
-    });
+    }, 3, TIMEOUT_SCRITTURA_MS);
   },
 
   login(ruoloId, pin) {
