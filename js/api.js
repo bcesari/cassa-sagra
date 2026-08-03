@@ -2,22 +2,22 @@ function attesa_(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// L'esecuzione anonima (ANYONE_ANONYMOUS) di un Web App Apps Script è nota
-// per essere occasionalmente lenta/instabile (richieste che impiegano 10-15s
-// e falliscono, contro l'1-2s normale) — un limite della piattaforma, non
-// del nostro codice. Aspettare fino in fondo un tentativo lento prima di
-// ritentare fa sommare i ritardi: ogni tentativo viene quindi interrotto dopo
-// un timeout e si passa al successivo.
+// Timeout per tentativo, con retry: una richiesta lenta viene abbandonata e
+// rifatta invece di aspettarla fino in fondo. I retry restano sicuri perché
+// ogni vendita porta il proprio vendita_id e il server deduplica.
 //
-// Le letture (GET) non hanno contesa di lock lato server: un timeout breve +
-// molti tentativi è la strategia giusta (abbandona un inciampo isolato,
-// riprova subito). Le scritture (POST) invece passano da LockService, che
-// sotto raffiche di più vendite quasi simultanee può far aspettare
-// legittimamente il proprio turno: un timeout troppo corto lì abbandonerebbe
-// un tentativo che stava solo aspettando in coda, aggiungendone un altro
-// nella stessa coda — serve un timeout più paziente e meno tentativi.
+// Valori tarati sul backend attuale (Worker + API Sheets): letture ~0,3s,
+// scritture ~0,65s, code lunghe misurate entro i 2s. Sono quindi ampiamente
+// sopra il caso normale e servono solo a reagire a un vero blocco.
+//
+// Nota storica: con Apps Script la scrittura aveva 15s di timeout perché
+// passava da LockService e poteva legittimamente stare in coda ad aspettare il
+// proprio turno; abbandonare troppo presto peggiorava la contesa. Il Worker non
+// ha alcun lock (l'append dell'API Sheets è atomico lato Google), quindi
+// un'attesa lunga non è più "il proprio turno che arriva" ma un problema vero:
+// meglio accorgersene prima.
 const TIMEOUT_LETTURA_MS = 4000;
-const TIMEOUT_SCRITTURA_MS = 15000;
+const TIMEOUT_SCRITTURA_MS = 8000;
 
 async function fetchJson_(url, options, tentativi, timeoutMs) {
   tentativi = tentativi || 5;
