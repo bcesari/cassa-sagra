@@ -230,6 +230,69 @@ button {
   margin-bottom: 8px;
 }
 .listino-riga input { margin-bottom: 0; }
+
+/* Selettore icona: bottone in riga + pannello modale */
+.bottone-emoji {
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 6px 0;
+  background: white;
+  border: 1px solid var(--colore-secondario);
+  border-radius: var(--raggio);
+  cursor: pointer;
+}
+.overlay-emoji {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+.pannello-emoji {
+  background: white;
+  border-radius: var(--raggio);
+  padding: var(--spaziatura);
+  width: 100%;
+  max-width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.pannello-emoji-testa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.emoji-categoria {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #777;
+  margin: 12px 0 4px;
+}
+.emoji-griglia {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+.emoji-scelta {
+  font-size: 1.6rem;
+  line-height: 1;
+  /* Bersaglio comodo al tocco: sotto i ~44px si sbaglia emoji sul telefono. */
+  min-height: 46px;
+  min-width: 0; /* il min-width globale dei bottoni sfonderebbe la griglia a 6 colonne */
+  padding: 4px;
+  background: white;
+  border: 1px solid transparent;
+  border-radius: var(--raggio);
+  cursor: pointer;
+}
+.emoji-scelta:active { background: #eef7f0; border-color: var(--colore-primario); }
+.emoji-libera-riga { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+.emoji-libera-riga input { margin-bottom: 0; font-size: 1.2rem; }
 .messaggio-esito { margin-top: var(--spaziatura); font-weight: 600; color: var(--colore-primario); }
 .messaggio-esito.errore { color: var(--colore-errore); }
 

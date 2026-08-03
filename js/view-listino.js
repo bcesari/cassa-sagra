@@ -1,7 +1,84 @@
 Router.register('/listino', renderListino);
 
-const EMOJI_SUGGERITE = ['🍝', '🍲', '🥞', '🧀', '🍖', '🌭', '🍢', '🍡', '🍕', '🍔', '🥪', '🍷', '🍺', '🥤', '🍰'];
+// Emoji raggruppate per categoria: sono testo, quindi la lista può essere ampia
+// senza scaricare nulla in più. Restano solo suggerimenti — dal selettore si può
+// comunque incollare qualsiasi altra emoji.
+const EMOJI_CATEGORIE = [
+  ['Primi', ['🍝', '🍜', '🍲', '🥣', '🍚', '🥟', '🫓', '🍛', '🍥', '🫕', '🧆', '🥞']],
+  ['Carne e griglia', ['🍖', '🥩', '🍗', '🌭', '🍢', '🥓', '🍔', '🍤', '🐟', '🐑', '🐖', '🔥']],
+  ['Verdure e contorni', ['🥗', '🍟', '🧀', '🥔', '🌽', '🥦', '🍄', '🫑', '🍅', '🥒', '🧅', '🥕']],
+  ['Pane e pizza', ['🍕', '🥪', '🥖', '🥐', '🥯', '🌮', '🌯', '🥨']],
+  ['Dolci', ['🍰', '🧁', '🍩', '🍦', '🥧', '🍪', '🍮', '🍫', '🍬', '🍯', '🥮', '🍡']],
+  ['Bevande', ['🍷', '🍺', '🥤', '☕', '🧃', '🍸', '🍹', '🥂', '🍾', '🧋', '💧', '🫗']],
+  ['Varie', ['🍽️', '🎪', '⭐', '🏆', '🎯', '🎉', '🎫', '🇮🇹', '🌶️', '🧂', '🫒', '🧑‍🍳']]
+];
 const MAX_PIATTI = 12;
+
+// Un'emoji può occupare più di una "unità" JS (🇮🇹 ne occupa 4, 🧑‍🍳 cinque):
+// tagliare a lunghezza fissa spezzerebbe la sequenza e produrrebbe un glifo
+// rotto. Intl.Segmenter isola il primo carattere percepito; dove non c'è
+// (browser datati) si accetta il valore così com'è, essendo un campo compilato
+// solo da chi gestisce il listino.
+function primaEmoji(testo) {
+  const t = (testo || '').trim();
+  if (!t) return '';
+  if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+    const segmenter = new Intl.Segmenter('it', { granularity: 'grapheme' });
+    const primo = segmenter.segment(t)[Symbol.iterator]().next();
+    return primo.done ? '' : primo.value.segment;
+  }
+  return t;
+}
+
+// Selettore modale: le righe del listino sono già strette con otto campi, un
+// pannello a comparsa in linea le renderebbe illeggibili su telefono.
+function apriSelettoreEmoji(valoreCorrente, onScegli) {
+  const overlay = el('div', { class: 'overlay-emoji' });
+
+  function chiudi() {
+    overlay.remove();
+    document.removeEventListener('keydown', onEsc);
+  }
+  function onEsc(e) {
+    if (e.key === 'Escape') chiudi();
+  }
+  function scegli(valore) {
+    onScegli(primaEmoji(valore));
+    chiudi();
+  }
+
+  const libera = el('input', {
+    type: 'text',
+    class: 'input-emoji-libera',
+    value: valoreCorrente || '',
+    placeholder: 'Oppure incolla qui la tua emoji',
+    'aria-label': 'Emoji personalizzata'
+  });
+
+  const pannello = el('div', { class: 'pannello-emoji' }, [
+    el('div', { class: 'pannello-emoji-testa' }, [
+      el('strong', {}, ['Scegli icona']),
+      el('button', { type: 'button', class: 'bottone-link', onclick: chiudi }, ['Chiudi'])
+    ]),
+    ...EMOJI_CATEGORIE.flatMap(([nome, emoji]) => [
+      el('div', { class: 'emoji-categoria' }, [nome]),
+      el('div', { class: 'emoji-griglia' }, emoji.map((e) => el('button', {
+        type: 'button', class: 'emoji-scelta', title: e,
+        onclick: () => scegli(e)
+      }, [e])))
+    ]),
+    el('div', { class: 'emoji-categoria' }, ['Personalizzata']),
+    el('div', { class: 'emoji-libera-riga' }, [
+      libera,
+      el('button', { type: 'button', class: 'bottone-secondario', onclick: () => scegli(libera.value) }, ['Usa'])
+    ])
+  ]);
+
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) chiudi(); });
+  document.addEventListener('keydown', onEsc);
+  overlay.appendChild(pannello);
+  document.body.appendChild(overlay);
+}
 
 function renderListino(container) {
   const ruolo = Router.requireRuolo(['admin_listino']);
@@ -60,11 +137,16 @@ function disegnaForm(corpo, edizione, piattiEsistenti) {
           type: 'number', step: '0.5', placeholder: 'Prezzo', value: r.prezzo,
           oninput: (e) => { r.prezzo = parseFloat(e.target.value); }
         }),
-        el('input', {
-          type: 'text', placeholder: 'Emoji', maxlength: '2', value: r.icona,
-          list: 'emoji-suggerite',
-          oninput: (e) => { r.icona = e.target.value; }
-        }),
+        (() => {
+          const bottoneIcona = el('button', {
+            type: 'button', class: 'bottone-emoji', title: 'Scegli icona',
+            onclick: () => apriSelettoreEmoji(r.icona, (scelta) => {
+              r.icona = scelta;
+              bottoneIcona.textContent = scelta || '🍽️';
+            })
+          }, [r.icona || '🍽️']);
+          return bottoneIcona;
+        })(),
         el('input', {
           type: 'number', placeholder: 'Ordine', value: r.ordine_visualizzazione || i + 1,
           oninput: (e) => { r.ordine_visualizzazione = parseInt(e.target.value, 10); }
@@ -88,9 +170,6 @@ function disegnaForm(corpo, edizione, piattiEsistenti) {
     });
   }
   disegnaRighe();
-
-  const datalist = el('datalist', { id: 'emoji-suggerite' },
-    EMOJI_SUGGERITE.map((e) => el('option', { value: e }, [])));
 
   const bottoneAggiungi = el('button', {
     class: 'bottone-secondario',
@@ -148,7 +227,6 @@ function disegnaForm(corpo, edizione, piattiEsistenti) {
   ]));
   corpo.appendChild(el('div', { class: 'sezione' }, [
     el('h2', {}, [`Piatti (max ${MAX_PIATTI})`]),
-    datalist,
     righeContainer,
     bottoneAggiungi
   ]));
