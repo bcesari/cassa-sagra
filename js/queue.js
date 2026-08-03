@@ -91,18 +91,21 @@ const Queue = (function () {
     syncing = true;
     try {
       const pending = await getAll();
-      for (const vendita of pending) {
+      // In parallelo, non in sequenza: ogni vendita è indipendente (dedup
+      // server-side su vendita_id), quindi con più vendite in coda il tempo
+      // totale è quello della più lenta, non la somma di tutte — con 4+
+      // vendite ferme una dietro l'altra, processarle in sequenza con retry
+      // individuali poteva far salire l'attesa a diversi minuti.
+      await Promise.allSettled(pending.map(async (vendita) => {
         try {
           const res = await Api.registraVendita(vendita);
           if (res && res.ok) {
             await remove(vendita.vendita_id);
-          } else {
-            break; // errore applicativo (es. auth): non insistere su questo giro
           }
         } catch (err) {
-          break; // rete assente: riprova al prossimo giro
+          // resta in coda, ritentata al prossimo giro
         }
-      }
+      }));
     } finally {
       syncing = false;
     }
