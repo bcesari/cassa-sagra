@@ -44,18 +44,15 @@ function renderLogin(container) {
         : ruoloBase;
       const pin = pinInput.value.trim();
 
-      const res = await Api.login(ruoloId, pin);
+      const res = await Api.bootstrap(ruoloId, pin);
       if (!res.ok) {
         errore.textContent = res.error || 'Accesso non riuscito';
         errore.classList.remove('nascosto');
         return;
       }
       State.setRuolo({ ruolo_id: res.ruolo_id, tipo: res.tipo, pin, piatto_id: res.piatto_id, nome_piatto: res.nome_piatto, nome_visualizzato: res.nome_visualizzato });
-
-      const edizione = await Api.edizioneCorrente();
-      State.setEdizione(edizione);
-      const listino = await Api.listino(edizione.edizione_id);
-      State.setListino(listino.piatti);
+      State.setEdizione(res.edizione);
+      State.setListino(res.piatti);
 
       const destinazione = { cassa: '/cassa', tesoriere: '/tesoriere', admin_listino: '/listino', responsabile: '/responsabile' }[res.tipo];
       Router.navigate(destinazione || '/cassa');

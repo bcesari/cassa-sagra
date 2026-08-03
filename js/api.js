@@ -5,15 +5,20 @@ function attesa_(ms) {
 // L'esecuzione anonima (ANYONE_ANONYMOUS) di un Web App Apps Script è nota
 // per essere occasionalmente lenta/instabile (richieste che impiegano 10-15s
 // e falliscono, contro l'1-2s normale) — un limite della piattaforma, non
-// del nostro codice. Si mitiga ritentando subito la singola chiamata un paio
-// di volte prima di lasciarla fallire: molto più veloce che aspettare l'intero
-// ciclo della coda offline (8s) per un semplice inciampo di rete Google.
+// del nostro codice. Aspettare fino in fondo un tentativo lento prima di
+// ritentare fa sommare i ritardi (con più chiamate in sequenza diventa
+// "un'eternità"): ogni tentativo viene quindi interrotto dopo TIMEOUT_MS e
+// si passa subito al successivo, che nella maggioranza dei casi è veloce.
+const FETCH_TIMEOUT_MS = 4000;
+
 async function fetchJson_(url, options, tentativi) {
-  tentativi = tentativi || 5;
+  tentativi = tentativi || 3;
   let ultimoErrore;
   for (let i = 0; i < tentativi; i++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     try {
-      const res = await fetch(url, options);
+      const res = await fetch(url, Object.assign({}, options, { signal: controller.signal }));
       const testo = await res.text();
       try {
         return JSON.parse(testo);
@@ -22,7 +27,9 @@ async function fetchJson_(url, options, tentativi) {
       }
     } catch (err) {
       ultimoErrore = err;
-      if (i < tentativi - 1) await attesa_(600 * (i + 1));
+      if (i < tentativi - 1) await attesa_(300);
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
   throw ultimoErrore;
@@ -55,6 +62,13 @@ const Api = {
 
   login(ruoloId, pin) {
     const qs = new URLSearchParams({ action: 'login', ruolo: ruoloId, pin });
+    return fetchJson_(`${CONFIG.API_URL}?${qs.toString()}`);
+  },
+  // Login + edizione corrente + listino in un'unica chiamata invece di tre in
+  // sequenza: con la latenza variabile di Apps Script, ogni round-trip in più
+  // si somma ai precedenti e il login percepito diventa molto più lento.
+  bootstrap(ruoloId, pin) {
+    const qs = new URLSearchParams({ action: 'bootstrap', ruolo: ruoloId, pin });
     return fetchJson_(`${CONFIG.API_URL}?${qs.toString()}`);
   },
   edizioneCorrente() { return this._get('edizioneCorrente'); },
