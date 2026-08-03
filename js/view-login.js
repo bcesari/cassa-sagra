@@ -38,24 +38,37 @@ function renderLogin(container) {
     class: 'bottone-primario',
     onclick: async () => {
       errore.classList.add('nascosto');
-      const ruoloBase = ruoloSelect.value;
-      const ruoloId = ruoloBase === 'responsabile'
-        ? 'responsabile_' + responsabilePiattoId.value.trim()
-        : ruoloBase;
-      const pin = pinInput.value.trim();
+      bottone.disabled = true;
+      bottone.textContent = 'Accesso in corso…';
+      try {
+        const ruoloBase = ruoloSelect.value;
+        const ruoloId = ruoloBase === 'responsabile'
+          ? 'responsabile_' + responsabilePiattoId.value.trim()
+          : ruoloBase;
+        const pin = pinInput.value.trim();
 
-      const res = await Api.bootstrap(ruoloId, pin);
-      if (!res.ok) {
-        errore.textContent = res.error || 'Accesso non riuscito';
+        const res = await Api.bootstrap(ruoloId, pin);
+        if (!res.ok) {
+          errore.textContent = res.error || 'Accesso non riuscito';
+          errore.classList.remove('nascosto');
+          return;
+        }
+        State.setRuolo({ ruolo_id: res.ruolo_id, tipo: res.tipo, pin, piatto_id: res.piatto_id, nome_piatto: res.nome_piatto, nome_visualizzato: res.nome_visualizzato });
+        State.setEdizione(res.edizione);
+        State.setListino(res.piatti);
+
+        const destinazione = { cassa: '/cassa', tesoriere: '/tesoriere', admin_listino: '/listino', responsabile: '/responsabile' }[res.tipo];
+        Router.navigate(destinazione || '/cassa');
+      } catch (err) {
+        // Senza questo catch, se tutti i tentativi di rete falliscono la
+        // promise dell'handler va in rejection senza che nulla venga
+        // mostrato: sembra che il pulsante "non faccia niente".
+        errore.textContent = 'Connessione al server non riuscita, riprova.';
         errore.classList.remove('nascosto');
-        return;
+      } finally {
+        bottone.disabled = false;
+        bottone.textContent = 'Accedi';
       }
-      State.setRuolo({ ruolo_id: res.ruolo_id, tipo: res.tipo, pin, piatto_id: res.piatto_id, nome_piatto: res.nome_piatto, nome_visualizzato: res.nome_visualizzato });
-      State.setEdizione(res.edizione);
-      State.setListino(res.piatti);
-
-      const destinazione = { cassa: '/cassa', tesoriere: '/tesoriere', admin_listino: '/listino', responsabile: '/responsabile' }[res.tipo];
-      Router.navigate(destinazione || '/cassa');
     }
   }, ['Accedi']);
 

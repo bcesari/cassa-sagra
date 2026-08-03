@@ -12,7 +12,7 @@ function attesa_(ms) {
 const FETCH_TIMEOUT_MS = 4000;
 
 async function fetchJson_(url, options, tentativi) {
-  tentativi = tentativi || 3;
+  tentativi = tentativi || 5;
   let ultimoErrore;
   for (let i = 0; i < tentativi; i++) {
     const controller = new AbortController();
