@@ -205,10 +205,26 @@ button {
 .riga-dato-grande { font-size: 2rem; font-weight: 700; color: var(--colore-primario); }
 .nota { font-size: 0.85rem; color: #777; margin-top: 8px; }
 
+/* Dettaglio per piatto del responsabile che segue un gruppo (es. sagne
+   bianche + rosse): il dato più utile a colpo d'occhio è quello recente,
+   quindi è quello evidenziato. */
+.riga-piatto-responsabile {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+.riga-piatto-responsabile:last-child { border-bottom: none; }
+.riga-piatto-nome { font-weight: 600; }
+.riga-piatto-ultimi { font-size: 1.2rem; font-weight: 700; color: var(--colore-primario); white-space: nowrap; }
+.riga-piatto-totale { font-size: 0.9rem; color: #777; white-space: nowrap; }
+
 /* Gestione Listino */
 .listino-riga {
   display: grid;
-  grid-template-columns: 1fr 1.5fr 0.8fr 0.6fr 0.6fr 1fr auto;
+  grid-template-columns: 1fr 1.5fr 0.8fr 0.6fr 0.6fr 0.9fr 0.9fr auto;
   gap: 6px;
   align-items: center;
   margin-bottom: 8px;

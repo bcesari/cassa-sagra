@@ -35,9 +35,12 @@ function disegnaForm(corpo, edizione, piattiEsistenti) {
   });
 
   const righeContainer = el('div', { class: 'listino-righe' });
+  // pin_responsabile arriva sempre vuoto: il server non lo restituisce mai al
+  // client (è un segreto) e reintegra quello esistente se il payload lo lascia
+  // vuoto — vedi salvaListino_ in Listino.gs.
   let righe = piattiEsistenti.length > 0
-    ? piattiEsistenti.map((p) => ({ ...p, pin_responsabile: p.pin_responsabile || '' }))
-    : [{ piatto_id: '', nome_piatto: '', prezzo: '', icona: '', ordine_visualizzazione: 1, pin_responsabile: '' }];
+    ? piattiEsistenti.map((p) => ({ ...p, gruppo: p.gruppo || '', pin_responsabile: '' }))
+    : [{ piatto_id: '', nome_piatto: '', prezzo: '', icona: '', ordine_visualizzazione: 1, gruppo: '', pin_responsabile: '' }];
 
   const messaggio = el('div', { class: 'messaggio-esito nascosto' });
 
@@ -67,7 +70,13 @@ function disegnaForm(corpo, edizione, piattiEsistenti) {
           oninput: (e) => { r.ordine_visualizzazione = parseInt(e.target.value, 10); }
         }),
         el('input', {
-          type: 'text', placeholder: 'PIN responsabile', value: r.pin_responsabile,
+          type: 'text', placeholder: 'Gruppo (opz.)', value: r.gruppo || '',
+          title: 'Piatti con lo stesso gruppo sono seguiti dallo stesso responsabile, che ne vede i totali separati (es. "sagne" su bianche e rosse). Lascia vuoto se il piatto sta a sé.',
+          oninput: (e) => { r.gruppo = e.target.value.trim().toLowerCase(); }
+        }),
+        el('input', {
+          type: 'text', placeholder: 'PIN (invariato)', value: r.pin_responsabile,
+          title: 'Vuoto = PIN attuale invariato. Scrivi un valore solo per cambiarlo.',
           oninput: (e) => { r.pin_responsabile = e.target.value.trim(); }
         }),
         el('button', {
@@ -91,7 +100,7 @@ function disegnaForm(corpo, edizione, piattiEsistenti) {
         messaggio.classList.remove('nascosto');
         return;
       }
-      righe.push({ piatto_id: '', nome_piatto: '', prezzo: '', icona: '', ordine_visualizzazione: righe.length + 1, pin_responsabile: '' });
+      righe.push({ piatto_id: '', nome_piatto: '', prezzo: '', icona: '', ordine_visualizzazione: righe.length + 1, gruppo: '', pin_responsabile: '' });
       disegnaRighe();
     }
   }, ['+ Aggiungi piatto']);

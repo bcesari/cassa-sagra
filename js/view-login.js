@@ -53,7 +53,7 @@ function renderLogin(container) {
           errore.classList.remove('nascosto');
           return;
         }
-        State.setRuolo({ ruolo_id: res.ruolo_id, tipo: res.tipo, pin, piatto_id: res.piatto_id, nome_piatto: res.nome_piatto, nome_visualizzato: res.nome_visualizzato });
+        State.setRuolo({ ruolo_id: res.ruolo_id, tipo: res.tipo, pin, piatto_id: res.piatto_id, nome_piatto: res.nome_piatto, gruppo: res.gruppo, nome_visualizzato: res.nome_visualizzato });
         State.setEdizione(res.edizione);
         State.setListino(res.piatti);
 
