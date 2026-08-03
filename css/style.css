@@ -1,0 +1,221 @@
+:root {
+  --colore-primario: #2c6e49;
+  --colore-primario-scuro: #1e4d33;
+  --colore-secondario: #e8e8e8;
+  --colore-testo: #1a1a1a;
+  --colore-sfondo: #fafafa;
+  --colore-errore: #b3261e;
+  --colore-allerta: #fff3cd;
+  --colore-allerta-bordo: #f0ad4e;
+  --spaziatura: 12px;
+  --raggio: 10px;
+  --altezza-tap-minima: 56px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--colore-sfondo);
+  color: var(--colore-testo);
+  font-size: 16px;
+}
+
+#app { max-width: 900px; margin: 0 auto; padding: var(--spaziatura); padding-bottom: 80px; }
+
+.nascosto { display: none !important; }
+
+h1 { font-size: 1.4rem; margin: 0; }
+h2 { font-size: 1.1rem; margin: 0 0 8px; }
+
+input, select, button {
+  font-size: 16px; /* evita zoom automatico su iOS Safari */
+  font-family: inherit;
+}
+
+input[type="text"], input[type="number"], input[type="password"], select {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: var(--spaziatura);
+  border: 1px solid #ccc;
+  border-radius: var(--raggio);
+  min-height: var(--altezza-tap-minima);
+}
+
+button {
+  min-height: var(--altezza-tap-minima);
+  min-width: var(--altezza-tap-minima);
+  border: none;
+  border-radius: var(--raggio);
+  cursor: pointer;
+  padding: 10px 16px;
+}
+
+.bottone-primario {
+  background: var(--colore-primario);
+  color: white;
+  font-weight: 600;
+  width: 100%;
+}
+.bottone-primario:active { background: var(--colore-primario-scuro); }
+
+.bottone-secondario {
+  background: var(--colore-secondario);
+  color: var(--colore-testo);
+}
+
+.bottone-link {
+  background: transparent;
+  color: var(--colore-primario);
+  text-decoration: underline;
+  min-width: auto;
+}
+
+.bottone-grande { font-size: 1.1rem; padding: 16px; }
+
+.bottone-meno {
+  background: #f0d0d0;
+  color: var(--colore-errore);
+  font-size: 1.2rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.errore { color: var(--colore-errore); margin: 8px 0; }
+
+/* Login */
+.schermata-login {
+  max-width: 360px;
+  margin: 40px auto;
+  display: flex;
+  flex-direction: column;
+}
+.schermata-login h1 { text-align: center; margin-bottom: 20px; }
+.schermata-login label { font-weight: 600; margin-bottom: 4px; }
+
+/* Intestazione comune */
+.intestazione {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spaziatura);
+}
+
+.contatore-coda {
+  background: var(--colore-allerta);
+  border: 1px solid var(--colore-allerta-bordo);
+  border-radius: var(--raggio);
+  padding: 8px 12px;
+  margin-bottom: var(--spaziatura);
+}
+
+/* Alert banner */
+.alert-banner {
+  background: #fdecea;
+  border: 1px solid var(--colore-errore);
+  border-radius: var(--raggio);
+  margin-bottom: var(--spaziatura);
+  overflow: hidden;
+}
+.alert-riga {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid #f5c6c2;
+}
+.alert-riga:last-child { border-bottom: none; }
+.alert-chiudi {
+  background: transparent;
+  color: var(--colore-errore);
+  min-width: 36px;
+  min-height: 36px;
+  padding: 4px;
+}
+
+.invio-alert { display: flex; gap: 8px; margin-top: var(--spaziatura); }
+.invio-alert input { margin-bottom: 0; flex: 1; }
+
+/* Griglia piatti: si adatta da sola a telefono (2-3 colonne) e tablet (4-6) */
+.griglia-piatti {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: var(--spaziatura);
+}
+.piatto-bottone {
+  background: white;
+  border: 2px solid var(--colore-secondario);
+  border-radius: var(--raggio);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px;
+  padding: 12px 6px;
+  gap: 4px;
+}
+.piatto-bottone:active { background: #eef7f0; border-color: var(--colore-primario); }
+.piatto-icona { font-size: 2rem; }
+.piatto-nome { font-weight: 600; text-align: center; }
+.piatto-prezzo { color: #555; font-size: 0.9rem; }
+
+/* Riepilogo ordine */
+.riepilogo-box {
+  background: white;
+  border-radius: var(--raggio);
+  padding: var(--spaziatura);
+  border: 1px solid var(--colore-secondario);
+}
+.riepilogo-vuoto { color: #888; padding: 8px 0; }
+.riepilogo-riga {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+.riepilogo-nome { flex: 1; }
+.riepilogo-subtotale { font-weight: 600; }
+.totale-ordine { font-size: 1.2rem; font-weight: 700; margin: 12px 0; }
+.resto { color: var(--colore-primario); font-weight: 600; margin-bottom: var(--spaziatura); }
+.azioni-ordine { display: flex; gap: 10px; }
+.azioni-ordine .bottone-secondario { flex: 1; }
+.azioni-ordine .bottone-primario { flex: 2; }
+
+.segnalazione-tesoriere, .segnalazione-broadcast { margin-top: var(--spaziatura); }
+
+/* Tesoriere / Responsabile */
+.totale-generale { font-size: 1.3rem; font-weight: 700; margin-bottom: var(--spaziatura); }
+.sezione {
+  background: white;
+  border: 1px solid var(--colore-secondario);
+  border-radius: var(--raggio);
+  padding: var(--spaziatura);
+  margin-bottom: var(--spaziatura);
+}
+.riga-dato { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; }
+.riga-dato:last-child { border-bottom: none; }
+.riga-dato-grande { font-size: 2rem; font-weight: 700; color: var(--colore-primario); }
+.nota { font-size: 0.85rem; color: #777; margin-top: 8px; }
+
+/* Gestione Listino */
+.listino-riga {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 0.8fr 0.6fr 0.6fr 1fr auto;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.listino-riga input { margin-bottom: 0; }
+.messaggio-esito { margin-top: var(--spaziatura); font-weight: 600; color: var(--colore-primario); }
+.messaggio-esito.errore { color: var(--colore-errore); }
+
+/* Tablet: più respiro, non riorganizzazione strutturale */
+@media (min-width: 600px) {
+  #app { padding: 24px; }
+  .piatto-bottone { min-height: 120px; }
+  .piatto-icona { font-size: 2.5rem; }
+  .listino-riga { gap: 10px; }
+}

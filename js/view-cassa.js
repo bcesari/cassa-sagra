@@ -1,0 +1,166 @@
+Router.register('/cassa', renderCassa);
+
+function renderCassa(container) {
+  const ruolo = Router.requireRuolo(['cassa']);
+  if (!ruolo) return;
+
+  const edizione = State.getEdizione();
+  const listino = State.getListino();
+  let ordine = State.getOrdineCorrente();
+
+  const radice = el('div', { class: 'vista-cassa' });
+  container.appendChild(radice);
+
+  Alerts.renderBanner(radice, 'tutte_le_casse', edizione.edizione_id);
+
+  const intestazione = el('div', { class: 'intestazione' }, [
+    el('h1', {}, [`💰 ${ruolo.nome_visualizzato || ruolo.ruolo_id}`]),
+    el('button', { class: 'bottone-link', onclick: () => Router.navigate('/login') }, ['Cambia utente'])
+  ]);
+  radice.appendChild(intestazione);
+
+  const contatoreCoda = el('div', { class: 'contatore-coda nascosto' });
+  radice.appendChild(contatoreCoda);
+  Queue.onChange((n) => {
+    if (n > 0) {
+      contatoreCoda.textContent = `⏳ ${n} vendita/e in attesa di connessione`;
+      contatoreCoda.classList.remove('nascosto');
+    } else {
+      contatoreCoda.classList.add('nascosto');
+    }
+  });
+  Queue.getAll().then((pending) => {
+    if (pending.length > 0) {
+      contatoreCoda.textContent = `⏳ ${pending.length} vendita/e in attesa di connessione`;
+      contatoreCoda.classList.remove('nascosto');
+    }
+  });
+
+  const griglia = el('div', { class: 'griglia-piatti' });
+  const riepilogo = el('div', { class: 'riepilogo-ordine' });
+  const totaleEl = el('div', { class: 'totale-ordine' });
+  const contantiInput = el('input', { type: 'number', inputmode: 'decimal', min: '0', step: '0.5', placeholder: 'Contanti ricevuti (opzionale)' });
+  const restoEl = el('div', { class: 'resto' });
+
+  function totaleOrdine() {
+    return listino.reduce((sum, p) => sum + (ordine[p.piatto_id] || 0) * p.prezzo, 0);
+  }
+
+  function aggiornaOrdine(nuovoOrdine) {
+    ordine = nuovoOrdine;
+    State.setOrdineCorrente(ordine);
+    disegnaRiepilogo();
+  }
+
+  function disegnaGriglia() {
+    griglia.innerHTML = '';
+    listino.forEach((p) => {
+      griglia.appendChild(el('button', {
+        class: 'piatto-bottone',
+        onclick: () => aggiornaOrdine({ ...ordine, [p.piatto_id]: (ordine[p.piatto_id] || 0) + 1 })
+      }, [
+        el('span', { class: 'piatto-icona' }, [p.icona || '🍽️']),
+        el('span', { class: 'piatto-nome' }, [p.nome_piatto]),
+        el('span', { class: 'piatto-prezzo' }, [formatEuro(p.prezzo)])
+      ]));
+    });
+  }
+
+  function disegnaRiepilogo() {
+    riepilogo.innerHTML = '';
+    const righe = listino.filter((p) => (ordine[p.piatto_id] || 0) > 0);
+    if (righe.length === 0) {
+      riepilogo.appendChild(el('div', { class: 'riepilogo-vuoto' }, ['Nessun piatto selezionato']));
+    }
+    righe.forEach((p) => {
+      const q = ordine[p.piatto_id];
+      riepilogo.appendChild(el('div', { class: 'riepilogo-riga' }, [
+        el('button', {
+          class: 'bottone-meno',
+          onclick: () => {
+            const q2 = q - 1;
+            const nuovo = { ...ordine };
+            if (q2 <= 0) delete nuovo[p.piatto_id]; else nuovo[p.piatto_id] = q2;
+            aggiornaOrdine(nuovo);
+          }
+        }, ['−']),
+        el('span', { class: 'riepilogo-nome' }, [`${p.nome_piatto} ×${q}`]),
+        el('span', { class: 'riepilogo-subtotale' }, [formatEuro(q * p.prezzo)])
+      ]));
+    });
+    const totale = totaleOrdine();
+    totaleEl.textContent = `Totale: ${formatEuro(totale)}`;
+    aggiornaResto(totale);
+  }
+
+  function aggiornaResto(totale) {
+    const contanti = parseFloat(contantiInput.value);
+    if (isNaN(contanti)) { restoEl.textContent = ''; return; }
+    restoEl.textContent = `Resto: ${formatEuro(contanti - totale)}`;
+  }
+
+  contantiInput.addEventListener('input', () => aggiornaResto(totaleOrdine()));
+
+  const bottoneRegistra = el('button', {
+    class: 'bottone-primario bottone-grande',
+    onclick: async () => {
+      const righe = listino
+        .filter((p) => (ordine[p.piatto_id] || 0) > 0)
+        .map((p) => ({
+          piatto_id: p.piatto_id,
+          nome_piatto: p.nome_piatto,
+          quantita: ordine[p.piatto_id],
+          prezzo_unitario: p.prezzo,
+          subtotale: ordine[p.piatto_id] * p.prezzo
+        }));
+      if (righe.length === 0) return;
+
+      const totale = totaleOrdine();
+      const contanti = parseFloat(contantiInput.value);
+      const vendita = {
+        // ruolo_id/pin incorporati qui: se il retry in coda avviene dopo un
+        // cambio turno sullo stesso device, deve comunque autenticarsi con le
+        // credenziali della cassa che ha fatto la vendita, non con quelle del
+        // ruolo eventualmente loggato al momento del retry.
+        ruolo_id: ruolo.ruolo_id,
+        pin: ruolo.pin,
+        vendita_id: uuidv4(),
+        edizione_id: edizione.edizione_id,
+        cassa: ruolo.ruolo_id,
+        timestamp_iso: new Date().toISOString(),
+        totale,
+        contanti_ricevuti: isNaN(contanti) ? '' : contanti,
+        resto: isNaN(contanti) ? '' : contanti - totale,
+        righe
+      };
+
+      await Queue.add(vendita);
+      Queue.trySync();
+
+      aggiornaOrdine({});
+      contantiInput.value = '';
+      restoEl.textContent = '';
+    }
+  }, ['Registra vendita']);
+
+  const bottonePulisci = el('button', {
+    class: 'bottone-secondario',
+    onclick: () => { aggiornaOrdine({}); contantiInput.value = ''; restoEl.textContent = ''; }
+  }, ['Pulisci']);
+
+  const segnalazione = el('div', { class: 'segnalazione-tesoriere' });
+  Alerts.renderInvioForm(segnalazione, ruolo.ruolo_id, 'tesoriere', 'Segnala al tesoriere (es. blocchetti in esaurimento)');
+
+  radice.appendChild(griglia);
+  radice.appendChild(el('div', { class: 'riepilogo-box' }, [
+    riepilogo,
+    totaleEl,
+    contantiInput,
+    restoEl,
+    el('div', { class: 'azioni-ordine' }, [bottonePulisci, bottoneRegistra])
+  ]));
+  radice.appendChild(segnalazione);
+
+  disegnaGriglia();
+  disegnaRiepilogo();
+}
