@@ -79,7 +79,7 @@ function renderResponsabile(container) {
     .then((trovate) => {
       const foto = trovate.filter(Boolean);
       if (foto.length === 0) return;
-      const galleria = el('div', { class: 'sezione galleria-team' }, [el('h2', {}, ['Il team'])]);
+      const galleria = el('div', { class: 'sezione galleria-team' });
       foto.forEach((img) => {
         img.className = 'foto-responsabile';
         img.alt = '';
