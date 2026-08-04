@@ -69,6 +69,43 @@ function renderResponsabile(container) {
   Alerts.renderInvioForm(segnalazione, ruolo.ruolo_id, 'tutte_le_casse', `es. "${etichetta} terminate, non vendere più"`);
   radice.appendChild(segnalazione);
 
+  // Foto del team, opzionali: da 1 a 3 file per gruppo/piatto, nominati
+  // <slug>-1.webp, <slug>-2.webp, <slug>-3.webp in icons/responsabili/. Non
+  // richiede nulla nel foglio Google: se i file non ci sono (caso di oggi,
+  // nessuna foto ancora caricata) la sezione semplicemente non compare, senza
+  // spazio vuoto né errori — stesso spirito del fallback delle icone piatto.
+  const chiaveTeam = slugTeam(ruolo.gruppo || ruolo.piatto_id);
+  Promise.all([1, 2, 3].map((n) => provaImmagine(`icons/responsabili/${chiaveTeam}-${n}.webp`)))
+    .then((trovate) => {
+      const foto = trovate.filter(Boolean);
+      if (foto.length === 0) return;
+      const galleria = el('div', { class: 'sezione galleria-team' }, [el('h2', {}, ['Il team'])]);
+      foto.forEach((img) => {
+        img.className = 'foto-responsabile';
+        img.alt = '';
+        galleria.appendChild(img);
+      });
+      radice.appendChild(galleria);
+    });
+
   aggiorna();
   Router.setPoll(setInterval(aggiorna, CONFIG.POLL_INTERVAL_MS));
+}
+
+function slugTeam(testo) {
+  return String(testo || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // toglie accenti
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function provaImmagine(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
 }

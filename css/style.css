@@ -267,6 +267,17 @@ button {
 .riga-piatto-ultimi { font-size: 1.2rem; font-weight: 700; color: var(--colore-primario); white-space: nowrap; }
 .riga-piatto-totale { font-size: 0.9rem; color: #777; white-space: nowrap; }
 
+/* Foto team del Responsabile: da 1 a 3, stesso riquadro quadrato per tutte
+   così il layout regge indipendentemente da quante ce ne sono. */
+.galleria-team { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.foto-responsabile {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: var(--raggio);
+  border: 2px solid var(--colore-secondario);
+}
+
 /* Gestione Listino */
 .listino-riga {
   display: grid;
@@ -349,4 +360,5 @@ button {
   .piatto-icona { font-size: 2.5rem; }
   .piatto-icona.icona-file { width: 3.75rem; height: 3.75rem; }
   .listino-riga { gap: 10px; }
+  .foto-responsabile { width: 150px; height: 150px; }
 }
