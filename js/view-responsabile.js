@@ -13,15 +13,13 @@ function renderResponsabile(container) {
     ? ruolo.gruppo.charAt(0).toUpperCase() + ruolo.gruppo.slice(1)
     : (ruolo.nome_piatto || ruolo.piatto_id);
 
-  document.body.classList.add('sfondo-responsabile');
-
   const radice = el('div', { class: 'vista-responsabile' });
   container.appendChild(radice);
 
   radice.appendChild(el('div', { class: 'intestazione' }, [
     el('h1', {}, [
       el('img', { src: 'icons/monogramma-ponte.webp', alt: '', class: 'icona-testata' }),
-      ` ${etichetta}`
+      ` Team ${etichetta}`
     ]),
     el('button', { class: 'bottone-link', onclick: () => Router.navigate('/login') }, ['Cambia utente'])
   ]));
