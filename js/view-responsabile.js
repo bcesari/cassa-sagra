@@ -44,7 +44,10 @@ function renderResponsabile(container) {
     ultimiEl.appendChild(el('div', { class: 'nota' }, ['Totale del gruppo. Dettaglio per piatto:']));
     perPiatto.forEach((p) => {
       ultimiEl.appendChild(el('div', { class: 'riga-piatto-responsabile' }, [
-        el('span', { class: 'riga-piatto-nome' }, [`${p.icona || ''} ${p.nome_piatto}`.trim()]),
+        el('span', { class: 'riga-piatto-nome' }, [
+          nodoIcona(p.icona, 'icona-riga'),
+          ` ${p.nome_piatto}`
+        ]),
         el('span', { class: 'riga-piatto-ultimi' }, [`${p.ultimi_10_min} negli ultimi ${CONFIG.RESPONSABILE_FINESTRA_MIN}'`]),
         el('span', { class: 'riga-piatto-totale' }, [`${p.totale_venduto} tot.`])
       ]));

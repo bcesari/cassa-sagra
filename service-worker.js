@@ -1,12 +1,19 @@
 // Cache solo dell'app-shell (HTML/CSS/JS statici), non offline-first completo:
 // le vendite restano responsabilità della coda in queue.js, non di questo worker.
 // Aumentare CACHE_NAME ad ogni deploy per invalidare la cache dei client.
-const CACHE_NAME = 'cassa-sagra-v9';
+const CACHE_NAME = 'cassa-sagra-v10';
+
+// Elenco delle icone dei piatti, generato da tools/aggiorna-icone.sh: serve a
+// precaricarle all'installazione, così durante la sagra disegnare la griglia non
+// richiede nessuna richiesta di rete.
+importScripts('./js/icone.js');
+
 const APP_SHELL = [
   './',
   './index.html',
   './css/style.css',
   './js/config.js',
+  './js/icone.js',
   './js/utils.js',
   './js/state.js',
   './js/api.js',
@@ -25,7 +32,16 @@ const APP_SHELL = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(async (cache) => {
+      await cache.addAll(APP_SHELL);
+      // Le icone a parte e una per una: addAll fallisce in blocco se anche un
+      // solo file manca, e un nome sbagliato nell'elenco impedirebbe
+      // l'installazione dell'intera app. Se una non c'è si vede l'emoji di
+      // riserva e nient'altro si rompe.
+      await Promise.all(
+        ICONE_PIATTI.map((f) => cache.add(`./icons/piatti/${f}`).catch(() => {}))
+      );
+    }).then(() => self.skipWaiting())
   );
 });
 

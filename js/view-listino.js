@@ -43,7 +43,9 @@ function apriSelettoreEmoji(valoreCorrente, onScegli) {
     if (e.key === 'Escape') chiudi();
   }
   function scegli(valore) {
-    onScegli(primaEmoji(valore));
+    // Un nome di file va salvato intero: primaEmoji lo ridurrebbe alla prima
+    // lettera, essendo pensata per troncare le emoji incollate.
+    onScegli(eFileIcona(valore) ? String(valore).trim() : primaEmoji(valore));
     chiudi();
   }
 
@@ -60,6 +62,15 @@ function apriSelettoreEmoji(valoreCorrente, onScegli) {
       el('strong', {}, ['Scegli icona']),
       el('button', { type: 'button', class: 'bottone-link', onclick: chiudi }, ['Chiudi'])
     ]),
+    // Le icone disegnate per la sagra vanno in cima: se ci sono, sono quelle da
+    // usare. La sezione sparisce se la cartella frontend/icons/piatti/ è vuota.
+    ...(ICONE_PIATTI.length > 0 ? [
+      el('div', { class: 'emoji-categoria' }, ['Icone della sagra']),
+      el('div', { class: 'emoji-griglia' }, ICONE_PIATTI.map((file) => el('button', {
+        type: 'button', class: 'emoji-scelta', title: file,
+        onclick: () => scegli(file)
+      }, [nodoIcona(file, 'icona-scelta')])))
+    ] : []),
     ...EMOJI_CATEGORIE.flatMap(([nome, emoji]) => [
       el('div', { class: 'emoji-categoria' }, [nome]),
       el('div', { class: 'emoji-griglia' }, emoji.map((e) => el('button', {
@@ -142,9 +153,10 @@ function disegnaForm(corpo, edizione, piattiEsistenti) {
             type: 'button', class: 'bottone-emoji', title: 'Scegli icona',
             onclick: () => apriSelettoreEmoji(r.icona, (scelta) => {
               r.icona = scelta;
-              bottoneIcona.textContent = scelta || '🍽️';
+              bottoneIcona.innerHTML = '';
+              bottoneIcona.appendChild(nodoIcona(scelta, 'icona-bottone'));
             })
-          }, [r.icona || '🍽️']);
+          }, [nodoIcona(r.icona, 'icona-bottone')]);
           return bottoneIcona;
         })(),
         el('input', {

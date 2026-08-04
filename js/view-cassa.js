@@ -59,7 +59,7 @@ function renderCassa(container) {
         class: 'piatto-bottone',
         onclick: () => aggiornaOrdine({ ...ordine, [p.piatto_id]: (ordine[p.piatto_id] || 0) + 1 })
       }, [
-        el('span', { class: 'piatto-icona' }, [p.icona || '🍽️']),
+        nodoIcona(p.icona, 'piatto-icona'),
         el('span', { class: 'piatto-nome' }, [p.nome_piatto]),
         el('span', { class: 'piatto-prezzo' }, [formatEuro(p.prezzo)])
       ]));

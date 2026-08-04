@@ -163,6 +163,15 @@ button {
 }
 .piatto-bottone:active { background: #eef7f0; border-color: var(--colore-primario); }
 .piatto-icona { font-size: 2rem; }
+
+/* Icone-file (le SVG in icons/piatti/): stessa resa visiva delle emoji che
+   sostituiscono, quindi misure in rem allineate al font-size del posto in cui
+   stanno. object-fit evita che un file non quadrato deformi la griglia. */
+.icona-file { object-fit: contain; display: inline-block; }
+.piatto-icona.icona-file { width: 2.4rem; height: 2.4rem; }
+.icona-riga.icona-file { width: 1.2em; height: 1.2em; vertical-align: -0.2em; }
+.icona-scelta.icona-file { width: 1.8rem; height: 1.8rem; }
+.icona-bottone.icona-file { width: 1.5rem; height: 1.5rem; vertical-align: middle; }
 .piatto-nome { font-weight: 600; text-align: center; }
 .piatto-prezzo { color: #555; font-size: 0.9rem; }
 
@@ -301,5 +310,6 @@ button {
   #app { padding: 24px; }
   .piatto-bottone { min-height: 120px; }
   .piatto-icona { font-size: 2.5rem; }
+  .piatto-icona.icona-file { width: 3rem; height: 3rem; }
   .listino-riga { gap: 10px; }
 }
