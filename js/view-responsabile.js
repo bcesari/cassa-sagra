@@ -10,7 +10,7 @@ function renderResponsabile(container) {
   // più piatti: intestazione e avvisi parlano del gruppo, non del singolo
   // piatto usato per il login.
   const etichetta = ruolo.gruppo
-    ? ruolo.gruppo.charAt(0).toUpperCase() + ruolo.gruppo.slice(1)
+    ? capitalizza(ruolo.gruppo)
     : (ruolo.nome_piatto || ruolo.piatto_id);
 
   const radice = el('div', { class: 'vista-responsabile' });

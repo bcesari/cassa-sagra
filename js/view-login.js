@@ -15,27 +15,47 @@ function renderLogin(container) {
 
   // Tendina invece di un campo libero: un id digitato a mano (spazi,
   // maiuscole, refusi) è un rischio inutile quando il server ha già
-  // l'elenco esatto. Caricata al volo solo la prima volta che serve, non ad
-  // ogni apertura del login: chi fa cassa non paga questa chiamata in più.
-  const responsabilePiattoId = el('select', { id: 'login-piatto-id', class: 'nascosto' }, [
-    el('option', { value: '' }, ['— scegli il piatto —'])
-  ]);
+  // l'elenco esatto.
+  const placeholderPiatto = el('option', { value: '' }, ['Caricamento piatti…']);
+  const responsabilePiattoId = el('select', { id: 'login-piatto-id', class: 'nascosto' }, [placeholderPiatto]);
+
   let piattiRichiesti = false;
   async function caricaPiattiResponsabile() {
     if (piattiRichiesti) return;
     piattiRichiesti = true;
+    // Pulizia di un eventuale tentativo precedente fallito, prima di riprovare.
+    Array.from(responsabilePiattoId.children).forEach((opt) => { if (opt !== placeholderPiatto) opt.remove(); });
+    placeholderPiatto.textContent = 'Caricamento piatti…';
     try {
-      const res = await Api.piattiResponsabili();
-      (res.piatti || []).forEach((p) => {
-        responsabilePiattoId.appendChild(el('option', { value: p.piatto_id }, [p.nome_piatto || p.piatto_id]));
+      const piatti = (await Api.piattiResponsabili()).piatti || [];
+
+      // Più piatti con lo stesso gruppo (es. sagne bianche/rosse) diventano
+      // una sola voce nel menu ("Sagne"): chi ha il PIN di uno qualsiasi dei
+      // due entra comunque nella stessa vista di gruppo, non deve indovinare
+      // quale dei due scegliere. gruppiVisti evita di ripetere la voce.
+      const gruppiVisti = new Set();
+      piatti.forEach((p) => {
+        if (p.gruppo) {
+          if (gruppiVisti.has(p.gruppo)) return;
+          gruppiVisti.add(p.gruppo);
+          responsabilePiattoId.appendChild(el('option', { value: 'gruppo:' + p.gruppo }, [capitalizza(p.gruppo)]));
+        } else {
+          responsabilePiattoId.appendChild(el('option', { value: p.piatto_id }, [p.nome_piatto || p.piatto_id]));
+        }
       });
+
+      placeholderPiatto.textContent = '— scegli il piatto —';
     } catch (err) {
       // Fallito il caricamento: si può ancora riprovare cambiando ruolo e
       // tornando su "Responsabile Piatto", che rilancia il caricamento.
       piattiRichiesti = false;
-      responsabilePiattoId.appendChild(el('option', { value: '' }, ['Errore nel caricamento, riprova']));
+      placeholderPiatto.textContent = 'Errore nel caricamento, riprova';
     }
   }
+  // Avviato subito, non solo quando si sceglie "Responsabile Piatto": così i
+  // piatti sono già pronti nel momento in cui servono, invece di far
+  // aspettare la chiamata da quel momento (percepito come lentezza del menu).
+  caricaPiattiResponsabile();
 
   // Il blur subito dopo la scelta toglie l'anello di focus blu del browser,
   // che altrimenti resta acceso sul <select> finché non si tocca dell'altro:

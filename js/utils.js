@@ -6,6 +6,10 @@ function uuidv4() {
   });
 }
 
+function capitalizza(s) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
 function formatEuro(n) {
   const v = Number(n) || 0;
   return '€ ' + v.toFixed(2).replace('.', ',');
