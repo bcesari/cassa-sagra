@@ -4,13 +4,13 @@
 // dal service worker (GitHub Pages non espone l'elenco di una cartella,
 // quindi va scritto qui).
 const ICONE_PIATTI = [
-  'arrosticini.svg',
-  'crespelle.svg',
-  'pane-prosciutto.svg',
-  'panino-polpette.svg',
-  'pecora-al-sugo.svg',
-  'sagne-bianche.svg',
-  'sagne-rosse.svg',
-  'salsiccia-brace.svg',
-  'trippetta.svg',
+  'arrosticini.webp',
+  'crespelle.webp',
+  'pane-prosciutto.webp',
+  'panino-polpette.webp',
+  'pecora-al-sugo.webp',
+  'sagne-bianche.webp',
+  'sagne-rosse.webp',
+  'salsiccia-brace.webp',
+  'trippetta.webp',
 ];

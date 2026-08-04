@@ -168,7 +168,11 @@ button {
    sostituiscono, quindi misure in rem allineate al font-size del posto in cui
    stanno. object-fit evita che un file non quadrato deformi la griglia. */
 .icona-file { object-fit: contain; display: inline-block; }
-.piatto-icona.icona-file { width: 2.4rem; height: 2.4rem; }
+/* Più grandi delle emoji che sostituiscono: sono illustrazioni con dettagli
+   (le righe della griglia, il rosmarino, la trama del pane) che sotto i ~45px
+   si impastano. Il riquadro del piatto ha spazio, il nome e il prezzo stanno
+   comodi lo stesso. */
+.piatto-icona.icona-file { width: 3rem; height: 3rem; }
 .icona-riga.icona-file { width: 1.2em; height: 1.2em; vertical-align: -0.2em; }
 .icona-scelta.icona-file { width: 1.8rem; height: 1.8rem; }
 .icona-bottone.icona-file { width: 1.5rem; height: 1.5rem; vertical-align: middle; }
@@ -310,6 +314,6 @@ button {
   #app { padding: 24px; }
   .piatto-bottone { min-height: 120px; }
   .piatto-icona { font-size: 2.5rem; }
-  .piatto-icona.icona-file { width: 3rem; height: 3rem; }
+  .piatto-icona.icona-file { width: 3.75rem; height: 3.75rem; }
   .listino-riga { gap: 10px; }
 }
