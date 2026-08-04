@@ -80,6 +80,12 @@ const Api = {
     const qs = new URLSearchParams({ action: 'bootstrap', ruolo: ruoloId, pin });
     return fetchJson_(`${CONFIG.API_URL}?${qs.toString()}`);
   },
+  // Senza ruolo/pin apposta: serve per popolare il menu a tendina del login
+  // Responsabile piatto prima ancora che l'utente digiti un PIN.
+  piattiResponsabili() {
+    const qs = new URLSearchParams({ action: 'piattiResponsabili' });
+    return fetchJson_(`${CONFIG.API_URL}?${qs.toString()}`);
+  },
   edizioneCorrente() { return this._get('edizioneCorrente'); },
   listino(edizioneId) { return this._get('listino', { edizione: edizioneId }); },
   tesoriere(edizioneId) { return this._get('tesoriere', { edizione: edizioneId }); },

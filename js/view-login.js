@@ -13,15 +13,34 @@ function renderLogin(container) {
     el('option', { value: 'responsabile' }, ['Responsabile Piatto'])
   ]);
 
-  const responsabilePiattoId = el('input', {
-    id: 'login-piatto-id',
-    type: 'text',
-    placeholder: 'id piatto (es. crespelle)',
-    class: 'nascosto'
-  });
+  // Tendina invece di un campo libero: un id digitato a mano (spazi,
+  // maiuscole, refusi) è un rischio inutile quando il server ha già
+  // l'elenco esatto. Caricata al volo solo la prima volta che serve, non ad
+  // ogni apertura del login: chi fa cassa non paga questa chiamata in più.
+  const responsabilePiattoId = el('select', { id: 'login-piatto-id', class: 'nascosto' }, [
+    el('option', { value: '' }, ['— scegli il piatto —'])
+  ]);
+  let piattiRichiesti = false;
+  async function caricaPiattiResponsabile() {
+    if (piattiRichiesti) return;
+    piattiRichiesti = true;
+    try {
+      const res = await Api.piattiResponsabili();
+      (res.piatti || []).forEach((p) => {
+        responsabilePiattoId.appendChild(el('option', { value: p.piatto_id }, [p.nome_piatto || p.piatto_id]));
+      });
+    } catch (err) {
+      // Fallito il caricamento: si può ancora riprovare cambiando ruolo e
+      // tornando su "Responsabile Piatto", che rilancia il caricamento.
+      piattiRichiesti = false;
+      responsabilePiattoId.appendChild(el('option', { value: '' }, ['Errore nel caricamento, riprova']));
+    }
+  }
 
   ruoloSelect.addEventListener('change', () => {
-    responsabilePiattoId.classList.toggle('nascosto', ruoloSelect.value !== 'responsabile');
+    const isResponsabile = ruoloSelect.value === 'responsabile';
+    responsabilePiattoId.classList.toggle('nascosto', !isResponsabile);
+    if (isResponsabile) caricaPiattiResponsabile();
   });
 
   const pinInput = el('input', {
