@@ -1,7 +1,7 @@
 // Cache solo dell'app-shell (HTML/CSS/JS statici), non offline-first completo:
 // le vendite restano responsabilità della coda in queue.js, non di questo worker.
 // Aumentare CACHE_NAME ad ogni deploy per invalidare la cache dei client.
-const CACHE_NAME = 'cassa-sagra-v15';
+const CACHE_NAME = 'cassa-sagra-v16';
 
 // Elenco delle icone dei piatti, generato da tools/aggiorna-icone.sh: serve a
 // precaricarle all'installazione, così durante la sagra disegnare la griglia non
@@ -29,7 +29,12 @@ const APP_SHELL = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/logo-quartiere.webp',
-  './icons/monogramma-ponte.webp'
+  './icons/monogramma-ponte.webp',
+  // Foto team del Responsabile: a differenza delle icone piatto, questa
+  // cartella non ha un generatore automatico dell'elenco — ogni nuova foto
+  // va aggiunta qui a mano finché non ne arrivano abbastanza da giustificarne
+  // uno (stesso pattern di tools/aggiorna-icone.sh).
+  './icons/responsabili/crespelle-1.webp'
 ];
 
 self.addEventListener('install', (event) => {
