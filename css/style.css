@@ -112,6 +112,9 @@ button {
   align-items: center;
   margin-bottom: var(--spaziatura);
 }
+/* Monogramma al posto di un'emoji nel titolo (es. Responsabile): allineato
+   all'altezza del testo circostante come le icone inline dei piatti. */
+.icona-testata { width: 1.1em; height: 1.1em; object-fit: contain; vertical-align: -0.15em; }
 
 .contatore-coda {
   background: var(--colore-allerta);
@@ -214,7 +217,7 @@ button {
 /* Card evidenziata: è il primo numero che l'occhio deve trovare (come il
    totale su uno scontrino), quindi sfondo e taglia diversi da tutto il resto. */
 .totale-generale {
-  font-size: 2rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: var(--colore-primario);
   background: var(--colore-allerta);
@@ -223,6 +226,9 @@ button {
   padding: 14px var(--spaziatura);
   margin-bottom: var(--spaziatura);
 }
+/* Il titolo "Tesoriere" era più piccolo del totale in evidenza subito sotto:
+   riequilibrio voluto, il titolo resta leggermente il più grande dei due. */
+.vista-tesoriere .intestazione h1 { font-size: 1.7rem; }
 .sezione {
   background: white;
   border: 1px solid var(--colore-secondario);

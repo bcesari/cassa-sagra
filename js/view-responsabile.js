@@ -17,7 +17,10 @@ function renderResponsabile(container) {
   container.appendChild(radice);
 
   radice.appendChild(el('div', { class: 'intestazione' }, [
-    el('h1', {}, [`🍽️ ${etichetta}`]),
+    el('h1', {}, [
+      el('img', { src: 'icons/monogramma-ponte.webp', alt: '', class: 'icona-testata' }),
+      ` ${etichetta}`
+    ]),
     el('button', { class: 'bottone-link', onclick: () => Router.navigate('/login') }, ['Cambia utente'])
   ]));
 
