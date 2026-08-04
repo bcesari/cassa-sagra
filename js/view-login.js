@@ -37,6 +37,13 @@ function renderLogin(container) {
     }
   }
 
+  // Il blur subito dopo la scelta toglie l'anello di focus blu del browser,
+  // che altrimenti resta acceso sul <select> finché non si tocca dell'altro:
+  // non è lentezza vera, ma dà quella sensazione.
+  [ruoloSelect, responsabilePiattoId].forEach((sel) => {
+    sel.addEventListener('change', () => sel.blur());
+  });
+
   ruoloSelect.addEventListener('change', () => {
     const isResponsabile = ruoloSelect.value === 'responsabile';
     responsabilePiattoId.classList.toggle('nascosto', !isResponsabile);
