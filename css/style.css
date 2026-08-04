@@ -31,6 +31,19 @@ body {
   touch-action: manipulation;
 }
 
+/* Illustrazione dell'arco del quartiere come sfondo, molto tenue (overlay
+   quasi opaco) apposta: sotto ci sono i numeri che il responsabile deve
+   leggere al volo durante il servizio, non deve competere con quelli. */
+body.sfondo-responsabile {
+  min-height: 100vh;
+  background-image:
+    linear-gradient(rgba(250, 250, 250, 0.94), rgba(250, 250, 250, 0.94)),
+    url('../icons/sfondo-responsabile.webp');
+  background-size: cover;
+  background-position: top center;
+  background-repeat: no-repeat;
+}
+
 #app { max-width: 900px; margin: 0 auto; padding: var(--spaziatura); padding-bottom: 80px; }
 
 .nascosto { display: none !important; }

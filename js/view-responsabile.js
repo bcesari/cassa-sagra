@@ -13,6 +13,8 @@ function renderResponsabile(container) {
     ? ruolo.gruppo.charAt(0).toUpperCase() + ruolo.gruppo.slice(1)
     : (ruolo.nome_piatto || ruolo.piatto_id);
 
+  document.body.classList.add('sfondo-responsabile');
+
   const radice = el('div', { class: 'vista-responsabile' });
   container.appendChild(radice);
 

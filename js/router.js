@@ -29,6 +29,10 @@ const Router = (function () {
 
     const container = document.getElementById('app');
     container.innerHTML = '';
+    // Reset di eventuali classi a livello body impostate dalla vista
+    // precedente (es. lo sfondo del Responsabile): ogni vista riparte pulita
+    // e imposta da sé quello che le serve.
+    document.body.className = '';
 
     const path = currentPath();
     const handler = routes[path] || routes['/login'];
