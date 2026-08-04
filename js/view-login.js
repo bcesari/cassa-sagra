@@ -73,7 +73,8 @@ function renderLogin(container) {
   }, ['Accedi']);
 
   container.appendChild(el('div', { class: 'schermata-login' }, [
-    el('h1', {}, ['🎪 Cassa Sagra']),
+    el('img', { src: 'icons/logo-quartiere.webp', alt: 'Quartiere Ponte', class: 'logo-login' }),
+    el('h1', {}, ['Cassa Sagra']),
     el('label', {}, ['Ruolo']),
     ruoloSelect,
     responsabilePiattoId,

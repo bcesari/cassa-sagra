@@ -36,7 +36,7 @@ function renderTesoriere(container) {
       .forEach((c) => {
         perCassa.appendChild(el('div', { class: 'riga-dato' }, [
           el('span', {}, [c.cassa]),
-          el('span', {}, [`${formatEuro(c.totale)} — ${c.n_ordini} clienti`])
+          el('span', { class: 'riga-dato-valore' }, [`${formatEuro(c.totale)} — ${c.n_ordini} clienti`])
         ]));
       });
     corpo.appendChild(perCassa);
@@ -47,7 +47,7 @@ function renderTesoriere(container) {
       .forEach((p) => {
         perPiatto.appendChild(el('div', { class: 'riga-dato' }, [
           el('span', {}, [p.nome_piatto]),
-          el('span', {}, [`${p.quantita} unità`])
+          el('span', { class: 'riga-dato-valore' }, [`${p.quantita} unità`])
         ]));
       });
     corpo.appendChild(perPiatto);
@@ -56,7 +56,7 @@ function renderTesoriere(container) {
     if (dati.picco && dati.picco.importo > 0) {
       picco.appendChild(el('div', { class: 'riga-dato' }, [
         el('span', {}, [`${formatOra(dati.picco.inizio_iso)} – ${formatOra(dati.picco.fine_iso)}`]),
-        el('span', {}, [formatEuro(dati.picco.importo)])
+        el('span', { class: 'riga-dato-valore' }, [formatEuro(dati.picco.importo)])
       ]));
     } else {
       picco.appendChild(el('div', { class: 'riepilogo-vuoto' }, ['Nessuna vendita registrata']));
@@ -66,7 +66,7 @@ function renderTesoriere(container) {
     const presenze = el('div', { class: 'sezione' }, [
       el('h2', {}, ['Presenze stimate']),
       el('div', { class: 'riga-dato' }, [
-        el('span', {}, [`≈ ${dati.presenze_stimate} persone`]),
+        el('span', { class: 'riga-dato-valore' }, [`≈ ${dati.presenze_stimate} persone`]),
         el('span', {}, [`(coeff. ${dati.coefficiente} pers./ordine)`])
       ]),
       el('div', { class: 'nota' }, [

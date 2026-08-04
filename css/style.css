@@ -1,10 +1,15 @@
 :root {
-  --colore-primario: #2c6e49;
-  --colore-primario-scuro: #1e4d33;
+  /* Palette del Quartiere Ponte (rosso/giallo, vedi stemma e locandine della
+     sagra): --colore-errore è deliberatamente più chiaro/saturo del primario,
+     altrimenti un bottone rosso e un messaggio d'errore rosso identico
+     sarebbero ambigui in cassa. */
+  --colore-primario: #a31f1f;
+  --colore-primario-scuro: #7a1717;
+  --colore-accento: #f2b705;
   --colore-secondario: #e8e8e8;
   --colore-testo: #1a1a1a;
   --colore-sfondo: #fafafa;
-  --colore-errore: #b3261e;
+  --colore-errore: #c62828;
   --colore-allerta: #fff3cd;
   --colore-allerta-bordo: #f0ad4e;
   --spaziatura: 12px;
@@ -97,6 +102,7 @@ button {
   flex-direction: column;
 }
 .schermata-login h1 { text-align: center; margin-bottom: 20px; }
+.logo-login { display: block; width: 96px; height: auto; margin: 0 auto 12px; }
 .schermata-login label { font-weight: 600; margin-bottom: 4px; }
 
 /* Intestazione comune */
@@ -205,7 +211,18 @@ button {
 .segnalazione-tesoriere, .segnalazione-broadcast { margin-top: var(--spaziatura); }
 
 /* Tesoriere / Responsabile */
-.totale-generale { font-size: 1.3rem; font-weight: 700; margin-bottom: var(--spaziatura); }
+/* Card evidenziata: è il primo numero che l'occhio deve trovare (come il
+   totale su uno scontrino), quindi sfondo e taglia diversi da tutto il resto. */
+.totale-generale {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--colore-primario);
+  background: var(--colore-allerta);
+  border: 1px solid var(--colore-allerta-bordo);
+  border-radius: var(--raggio);
+  padding: 14px var(--spaziatura);
+  margin-bottom: var(--spaziatura);
+}
 .sezione {
   background: white;
   border: 1px solid var(--colore-secondario);
@@ -215,6 +232,16 @@ button {
 }
 .riga-dato { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; }
 .riga-dato:last-child { border-bottom: none; }
+/* Il valore vero (non sempre l'ultimo span: nella riga presenze il dato
+   importante viene prima del coefficiente) risalta rispetto all'etichetta.
+   Non colorato di rosso apposta, altrimenti ogni riga urlerebbe allo stesso
+   modo e la gerarchia sparirebbe di nuovo — il rosso resta riservato a
+   .totale-generale, l'unico numero che deve saltare all'occhio per primo. */
+.riga-dato-valore {
+  font-weight: 700;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
 .riga-dato-grande { font-size: 2rem; font-weight: 700; color: var(--colore-primario); }
 .nota { font-size: 0.85rem; color: #777; margin-top: 8px; }
 
