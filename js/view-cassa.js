@@ -14,7 +14,10 @@ function renderCassa(container) {
   Alerts.renderBanner(radice, 'tutte_le_casse', edizione.edizione_id);
 
   const intestazione = el('div', { class: 'intestazione' }, [
-    el('h1', {}, [`💰 ${ruolo.nome_visualizzato || ruolo.ruolo_id}`]),
+    el('h1', {}, [
+      el('img', { src: 'icons/monogramma-ponte.webp', alt: '', class: 'icona-testata' }),
+      ` ${ruolo.nome_visualizzato || ruolo.ruolo_id}`
+    ]),
     el('button', { class: 'bottone-link', onclick: () => Router.navigate('/login') }, ['Cambia utente'])
   ]);
   radice.appendChild(intestazione);
@@ -144,7 +147,7 @@ function renderCassa(container) {
         // segnali al cassiere che non è stato registrato niente.
         await Queue.add(vendita);
       } catch (err) {
-        erroreRegistra.textContent = 'Vendita NON registrata: memoria del dispositivo non disponibile. Segna l\'ordine su carta e avvisa il tesoriere.';
+        erroreRegistra.textContent = 'Vendita NON registrata: memoria del dispositivo non disponibile. Segna l\'ordine su carta e avvisa l\'amministratore.';
         erroreRegistra.classList.remove('nascosto');
         return;
       } finally {
@@ -161,13 +164,8 @@ function renderCassa(container) {
     }
   }, ['Registra vendita']);
 
-  const bottonePulisci = el('button', {
-    class: 'bottone-secondario',
-    onclick: () => { aggiornaOrdine({}); contantiInput.value = ''; restoEl.textContent = ''; }
-  }, ['Pulisci']);
-
   const segnalazione = el('div', { class: 'segnalazione-tesoriere' });
-  Alerts.renderInvioForm(segnalazione, ruolo.ruolo_id, 'tesoriere', 'Segnala al tesoriere (es. blocchetti in esaurimento)');
+  Alerts.renderInvioForm(segnalazione, ruolo.ruolo_id, 'tesoriere', 'Segnala all\'amministratore (es. blocchetti in esaurimento)');
 
   radice.appendChild(griglia);
   radice.appendChild(el('div', { class: 'riepilogo-box' }, [
@@ -176,7 +174,7 @@ function renderCassa(container) {
     contantiInput,
     restoEl,
     erroreRegistra,
-    el('div', { class: 'azioni-ordine' }, [bottonePulisci, bottoneRegistra])
+    el('div', { class: 'azioni-ordine' }, [bottoneRegistra])
   ]));
   radice.appendChild(segnalazione);
 

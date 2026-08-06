@@ -12,7 +12,10 @@ function renderTesoriere(container) {
   Alerts.renderBanner(radice, 'tesoriere', edizione.edizione_id);
 
   radice.appendChild(el('div', { class: 'intestazione' }, [
-    el('h1', {}, ['📊 Tesoriere']),
+    el('h1', {}, [
+      el('img', { src: 'icons/monogramma-ponte.webp', alt: '', class: 'icona-testata' }),
+      ' Amministratore'
+    ]),
     el('button', { class: 'bottone-link', onclick: () => Router.navigate('/login') }, ['Cambia utente'])
   ]));
 
@@ -43,7 +46,7 @@ function renderTesoriere(container) {
       .sort((a, b) => a.cassa.localeCompare(b.cassa))
       .forEach((c) => {
         perCassa.appendChild(el('div', { class: 'riga-dato' }, [
-          el('span', {}, [c.cassa]),
+          el('span', {}, [c.nome_visualizzato || c.cassa]),
           el('span', { class: 'riga-dato-valore' }, [`${formatEuro(c.totale)} — ${c.n_ordini} clienti`])
         ]));
       });

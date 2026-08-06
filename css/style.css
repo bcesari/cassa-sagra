@@ -225,9 +225,11 @@ button {
 .totale-generale {
   font-size: 1.6rem;
   font-weight: 700;
-  color: var(--colore-primario);
-  background: var(--colore-allerta);
-  border: 1px solid var(--colore-allerta-bordo);
+  /* Blu/ciano scelti al posto di rosso/giallo su richiesta esplicita,
+     contrasto verificato: rapporto 7.65:1 (soglia WCAG AA testo normale 4.5:1). */
+  color: #38e8f5;
+  background: #0d3b66;
+  border: 1px solid #082944;
   border-radius: var(--raggio);
   padding: 14px var(--spaziatura);
   margin-bottom: var(--spaziatura);
@@ -374,6 +376,22 @@ button {
 .riga-cassa .nota { grid-area: nota; margin-top: 0; }
 .riga-cassa input { grid-area: input; margin-bottom: 0; }
 .riga-cassa button { grid-area: bottone; width: auto; padding-left: 16px; padding-right: 16px; }
+/* Apertura cassa: fondo iniziale + ticket consegnati, uno accanto all'altro
+   nella stessa area di griglia "input" (assegnata al contenitore, non ai
+   singoli input: grid-area sui figli non fa nulla fuori da un grid). */
+.riga-cassa-inputs { grid-area: input; display: flex; gap: 8px; }
+.riga-cassa-inputs input { flex: 1; min-width: 0; }
+
+/* Riepilogo mostrato sotto una cassa già chiusa: riscontro contabile +
+   ticket, stessi criteri del PDF (report.js) ma qui solo testo/badge, niente
+   canvas. */
+.riepilogo-chiusura { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ddd; }
+.badge-pareggio, .badge-scarto {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.badge-pareggio { color: var(--colore-successo); }
+.badge-scarto { color: var(--colore-errore); }
 
 .blocco-chiusura-cassa {
   padding: 12px 0;

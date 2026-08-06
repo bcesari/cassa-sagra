@@ -4,11 +4,11 @@ function renderLogin(container) {
   State.clearRuolo();
 
   const ruoloSelect = el('select', { id: 'login-ruolo' }, [
-    el('option', { value: 'cassa_1' }, ['Cassa 1']),
-    el('option', { value: 'cassa_2' }, ['Cassa 2']),
-    el('option', { value: 'cassa_3' }, ['Cassa 3']),
-    el('option', { value: 'cassa_4' }, ['Cassa 4']),
-    el('option', { value: 'tesoriere' }, ['Tesoriere']),
+    el('option', { value: 'cassa_1' }, ['Cassa 1 Mirko']),
+    el('option', { value: 'cassa_2' }, ['Cassa 2 Maurizio']),
+    el('option', { value: 'cassa_3' }, ['Cassa 3 Andrea']),
+    el('option', { value: 'cassa_4' }, ['Cassa 4 Emanuele']),
+    el('option', { value: 'tesoriere' }, ['Amministratore']),
     el('option', { value: 'admin_listino' }, ['Gestione Listino']),
     el('option', { value: 'responsabile' }, ['Responsabile Piatto'])
   ]);

@@ -21,10 +21,26 @@ const ChiusuraCasse = (function () {
       return;
     }
 
+    // Riscontro contabile + ticket per cassa (per mostrarli subito sotto ogni
+    // cassa già chiusa, non solo dentro il PDF finale): riusa la stessa
+    // aggregazione già calcolata per il report, una sola chiamata condivisa
+    // da tutte le casse, non una per cassa. Richiesta solo se serve (almeno
+    // una cassa chiusa), è di sola lettura quindi sicura da richiamare ad
+    // ogni render.
+    let report = null;
+    if (stato.casse.some((c) => c.chiusa)) {
+      try {
+        const r = await Api.reportServata(edizioneId);
+        if (!r.error) report = r;
+      } catch (e) {
+        report = null;
+      }
+    }
+
     const ricarica = () => render(container, edizioneId);
     container.innerHTML = '';
     container.appendChild(sezioneApertura(stato, edizioneId, ricarica));
-    container.appendChild(sezioneChiusura(stato, edizioneId, ricarica));
+    container.appendChild(sezioneChiusura(stato, report, edizioneId, ricarica));
     container.appendChild(sezioneReport(edizioneId));
   }
 
@@ -38,6 +54,11 @@ const ChiusuraCasse = (function () {
         placeholder: 'Fondo iniziale (€)',
         value: c.fondo_iniziale !== null ? c.fondo_iniziale : ''
       });
+      const inputTicket = el('input', {
+        type: 'number', step: '1', min: '0',
+        placeholder: 'Ticket consegnati',
+        value: c.ticket_consegnati !== null ? c.ticket_consegnati : ''
+      });
       const bottone = el('button', { type: 'button', class: 'bottone-secondario' }, [c.aperta ? 'Aggiorna' : 'Apri']);
 
       bottone.addEventListener('click', async () => {
@@ -46,10 +67,15 @@ const ChiusuraCasse = (function () {
           errore.textContent = 'Inserisci un fondo iniziale valido per ' + c.nome_visualizzato;
           return;
         }
+        const vTicket = Number(inputTicket.value);
+        if (inputTicket.value === '' || isNaN(vTicket) || vTicket < 0) {
+          errore.textContent = 'Inserisci un numero di ticket consegnati valido per ' + c.nome_visualizzato;
+          return;
+        }
         errore.textContent = '';
         bottone.disabled = true;
         try {
-          await Api.apriCassa({ edizione_id: edizioneId, cassa: c.cassa, fondo_iniziale: v });
+          await Api.apriCassa({ edizione_id: edizioneId, cassa: c.cassa, fondo_iniziale: v, ticket_consegnati: vTicket });
           await ricarica();
         } catch (e) {
           errore.textContent = 'Apertura NON salvata: ' + e.message;
@@ -60,7 +86,7 @@ const ChiusuraCasse = (function () {
       sezione.appendChild(el('div', { class: 'riga-cassa' }, [
         el('strong', {}, [c.nome_visualizzato]),
         el('span', { class: 'nota' }, [c.aperta ? `Aperta alle ${formatOra(c.orario_apertura)}` : 'Non ancora aperta']),
-        input,
+        el('div', { class: 'riga-cassa-inputs' }, [input, inputTicket]),
         bottone
       ]));
     });
@@ -68,7 +94,71 @@ const ChiusuraCasse = (function () {
     return sezione;
   }
 
-  function sezioneChiusura(stato, edizioneId, ricarica) {
+  // "in pareggio" (blu) / "scarto ±€" (rosso): stesso criterio e stessa
+  // scelta cromatica del PDF (report.js, skill dataviz — mai il colore da
+  // solo, qui affiancato dal testo che già lo spiega).
+  function badgeDifferenza(differenza) {
+    if (differenza === null) return el('span', { class: 'nota' }, ['cassa non chiusa']);
+    if (Math.abs(differenza) < 0.01) {
+      return el('span', { class: 'badge-pareggio' }, ['✓ in pareggio']);
+    }
+    const segno = differenza > 0 ? '+' : '';
+    return el('span', { class: 'badge-scarto' }, [`✕ scarto ${segno}${formatEuro(differenza)}`]);
+  }
+
+  function badgeDifferenzaTicket(differenza) {
+    if (differenza === 0) return el('span', { class: 'badge-pareggio' }, ['✓ combacia']);
+    const segno = differenza > 0 ? '+' : '';
+    return el('span', { class: 'badge-scarto' }, [`✕ ${segno}${differenza}`]);
+  }
+
+  function riepilogoChiusuraCassa(c, report) {
+    const box = el('div', { class: 'riepilogo-chiusura' }, []);
+    const datiCassa = report && report.casse ? report.casse.find((rc) => rc.cassa === c.cassa) : null;
+    if (!datiCassa) {
+      box.appendChild(el('div', { class: 'nota' }, ['Riscontro non disponibile, riprova più tardi.']));
+      return box;
+    }
+
+    box.appendChild(el('div', { class: 'riga-dato' }, [
+      el('span', {}, ['Atteso (fondo + vendite app)']),
+      el('span', { class: 'riga-dato-valore' }, [formatEuro(datiCassa.incasso_atteso)])
+    ]));
+    box.appendChild(el('div', { class: 'riga-dato' }, [
+      el('span', {}, ['Contato']),
+      el('span', { class: 'riga-dato-valore' }, [formatEuro(datiCassa.contante_contato)])
+    ]));
+    box.appendChild(el('div', { class: 'riga-dato' }, [
+      el('span', {}, ['Riscontro contabile']),
+      badgeDifferenza(datiCassa.differenza)
+    ]));
+    if (c.ticket_consegnati !== null) {
+      box.appendChild(el('div', { class: 'riga-dato' }, [
+        el('span', {}, ['Ticket consegnati']),
+        el('span', { class: 'riga-dato-valore' }, [String(c.ticket_consegnati)])
+      ]));
+    }
+
+    const righeTicket = report.riscontro_ticket.filter((r) => r.cassa === c.cassa);
+    if (righeTicket.length > 0) {
+      const tabella = el('div', { class: 'griglia-ticket' }, righeTicket.map((r) => el('div', { class: 'riga-dato' }, [
+        el('span', {}, [r.nome_piatto]),
+        badgeDifferenzaTicket(r.differenza)
+      ])));
+      box.appendChild(el('div', { class: 'nota' }, ['Riscontro ticket per piatto (contati vs vendite app):']));
+      box.appendChild(tabella);
+
+      const bottonePdf = el('button', { type: 'button', class: 'bottone-secondario' }, ['Genera PDF ticket']);
+      bottonePdf.addEventListener('click', () => {
+        Report.generaPdfTicketCassa(c.nome_visualizzato, righeTicket);
+      });
+      box.appendChild(bottonePdf);
+    }
+
+    return box;
+  }
+
+  function sezioneChiusura(stato, report, edizioneId, ricarica) {
     const errore = el('div', { class: 'errore' }, []);
     const sezione = el('div', { class: 'sezione' }, [el('h2', {}, ['Chiusura casse']), errore]);
     const piatti = stato.piatti.slice().sort((a, b) => a.ordine_visualizzazione - b.ordine_visualizzazione);
@@ -129,7 +219,8 @@ const ChiusuraCasse = (function () {
         ]),
         el('div', { class: 'nota' }, ['Ticket contati per piatto (dalla matrice del blocchetto):']),
         grigliaTicket,
-        bottone
+        bottone,
+        ...(c.chiusa && report ? [riepilogoChiusuraCassa(c, report)] : [])
       ]));
     });
 

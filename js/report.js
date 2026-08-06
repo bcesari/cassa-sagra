@@ -320,15 +320,25 @@ const Report = (function () {
     doc.addImage(disegnaCasse(dati.casse), 'JPEG', margineX, y, 515, 220 * (515 / 480));
     y += 220 * (515 / 480) + 24;
 
-    y = disegnaTabellaChiusura(doc, dati.casse, margineX, y);
-    y += 24;
-
-    if (dati.riscontro_ticket.length > 0) {
-      y = disegnaTabellaTicket(doc, dati.riscontro_ticket, margineX, y);
-    }
+    disegnaTabellaChiusura(doc, dati.casse, margineX, y);
 
     const nomeFile = `report-sagra-${edizione.edizione_id}-${new Date().toISOString().slice(0, 10)}.pdf`;
     doc.save(nomeFile);
+  }
+
+  // PDF separato, generabile per singola cassa al momento della chiusura:
+  // stessa disegnaTabellaTicket già usata nel report generale, qui su un
+  // documento a parte con solo le righe di quella cassa.
+  function generaPdfTicketCassa(nomeCassa, righe) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const margineX = 40;
+    doc.setFontSize(16);
+    doc.setTextColor(COLORE_PRIMARIO);
+    doc.text(`Riscontro ticket — ${nomeCassa}`, margineX, 50);
+    disegnaTabellaTicket(doc, righe, margineX, 80);
+    const slug = nomeCassa.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    doc.save(`riscontro-ticket-${slug}-${new Date().toISOString().slice(0, 10)}.pdf`);
   }
 
   function disegnaTabellaChiusura(doc, casse, x, y) {
@@ -425,5 +435,5 @@ const Report = (function () {
     return y;
   }
 
-  return { generaPdf };
+  return { generaPdf, generaPdfTicketCassa };
 })();
