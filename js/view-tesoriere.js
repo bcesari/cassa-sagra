@@ -19,6 +19,14 @@ function renderTesoriere(container) {
   const corpo = el('div', { class: 'tesoriere-corpo' }, ['Caricamento…']);
   radice.appendChild(corpo);
 
+  // Contenitore separato dal ciclo di poll di aggiorna(): contiene form che
+  // l'utente sta compilando (fondo cassa, contante contato, ticket), un
+  // rebuild ogni 10s ne cancellerebbe l'input. Si ridisegna solo dopo un
+  // salvataggio esplicito, dentro chiusura-cassa.js.
+  const contenitoreCasse = el('div', { class: 'chiusura-casse-corpo' }, []);
+  radice.appendChild(contenitoreCasse);
+  ChiusuraCasse.render(contenitoreCasse, edizione.edizione_id);
+
   async function aggiorna() {
     const dati = await Api.tesoriere(edizione.edizione_id);
     if (!dati || dati.error) {

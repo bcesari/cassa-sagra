@@ -95,5 +95,10 @@ const Api = {
   registraVendita(vendita) { return this._post('registraVendita', vendita); },
   inviaAlert(alert) { return this._post('inviaAlert', alert); },
   segnaAlertLetto(alertId) { return this._post('segnaAlertLetto', { alert_id: alertId }); },
-  salvaListino(payload) { return this._post('salvaListino', payload); }
+  salvaListino(payload) { return this._post('salvaListino', payload); },
+
+  statoCasse(edizioneId) { return this._get('statoCasse', { edizione: edizioneId }); },
+  apriCassa(payload) { return this._post('apriCassa', payload); },
+  chiudiCassa(payload) { return this._post('chiudiCassa', payload); },
+  reportServata(edizioneId) { return this._get('reportServata', { edizione: edizioneId }); }
 };

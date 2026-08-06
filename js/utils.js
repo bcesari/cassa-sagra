@@ -20,6 +20,43 @@ function formatOra(isoString) {
   return d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
 }
 
+function formatData(isoString) {
+  const d = new Date(isoString);
+  return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+// Conferma con overlay personalizzato invece di window.confirm (mai usato in
+// questa app): stesso pattern del selettore icone in view-listino.js
+// (apriSelettoreEmoji), qui generalizzato per un semplice sì/no. Promise che
+// risolve true/false in base al bottone premuto.
+function confermaAzione(messaggio) {
+  return new Promise((resolve) => {
+    const overlay = el('div', { class: 'overlay-conferma' });
+
+    function chiudi(esito) {
+      overlay.remove();
+      document.removeEventListener('keydown', onEsc);
+      resolve(esito);
+    }
+    function onEsc(e) {
+      if (e.key === 'Escape') chiudi(false);
+    }
+
+    const pannello = el('div', { class: 'pannello-conferma' }, [
+      el('p', {}, [messaggio]),
+      el('div', { class: 'pannello-conferma-azioni' }, [
+        el('button', { type: 'button', class: 'bottone-secondario', onclick: () => chiudi(false) }, ['Annulla']),
+        el('button', { type: 'button', class: 'bottone-primario', onclick: () => chiudi(true) }, ['Conferma'])
+      ])
+    ]);
+
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) chiudi(false); });
+    document.addEventListener('keydown', onEsc);
+    overlay.appendChild(pannello);
+    document.body.appendChild(overlay);
+  });
+}
+
 // L'icona di un piatto è una stringa nel foglio: o un'emoji (caso normale) o il
 // nome di un file dentro frontend/icons/piatti/ (le icone disegnate per la
 // sagra). Il file non viaggia mai nelle risposte dell'API — nel foglio e nella

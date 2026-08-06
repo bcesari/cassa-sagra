@@ -12,6 +12,12 @@
   --colore-errore: #c62828;
   --colore-allerta: #fff3cd;
   --colore-allerta-bordo: #f0ad4e;
+  /* Blu, non verde: un verde qualsiasi come "successo" fallisce il controllo
+     di distinguibilità daltonica contro --colore-errore già in uso (troppo
+     simili per chi non distingue rosso/verde). Validato con lo script della
+     skill dataviz prima di sceglierlo. Sempre accompagnato da icona e testo,
+     mai il colore da solo. */
+  --colore-successo: #0277bd;
   --spaziatura: 12px;
   --raggio: 10px;
   --altezza-tap-minima: 56px;
@@ -352,6 +358,65 @@ button {
 .emoji-libera-riga input { margin-bottom: 0; font-size: 1.2rem; }
 .messaggio-esito { margin-top: var(--spaziatura); font-weight: 600; color: var(--colore-primario); }
 .messaggio-esito.errore { color: var(--colore-errore); }
+
+/* Apertura/chiusura cassa (schermata Tesoriere) */
+.riga-cassa {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "nome nome" "nota nota" "input bottone";
+  gap: 6px 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+.riga-cassa:last-child { border-bottom: none; }
+.riga-cassa strong { grid-area: nome; }
+.riga-cassa .nota { grid-area: nota; margin-top: 0; }
+.riga-cassa input { grid-area: input; margin-bottom: 0; }
+.riga-cassa button { grid-area: bottone; width: auto; padding-left: 16px; padding-right: 16px; }
+
+.blocco-chiusura-cassa {
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+.blocco-chiusura-cassa:last-child { border-bottom: none; }
+.blocco-chiusura-cassa > .riga-cassa { border-bottom: none; padding-top: 0; }
+.griglia-ticket {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  margin: 8px 0;
+}
+.campo-ticket {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+  color: #555;
+  gap: 2px;
+}
+.campo-ticket input { margin-bottom: 0; padding: 8px 10px; min-height: 44px; }
+
+/* Conferma generica (genera report), stesso pattern di .overlay-emoji /
+   .pannello-emoji in view-listino.js ma per un semplice sì/no. */
+.overlay-conferma {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spaziatura);
+  z-index: 60;
+}
+.pannello-conferma {
+  background: white;
+  border-radius: var(--raggio);
+  padding: var(--spaziatura);
+  width: 100%;
+  max-width: 340px;
+}
+.pannello-conferma p { margin: 0 0 var(--spaziatura); }
+.pannello-conferma-azioni { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 /* Tablet: più respiro, non riorganizzazione strutturale */
 @media (min-width: 600px) {

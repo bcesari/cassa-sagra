@@ -1,7 +1,7 @@
 // Cache solo dell'app-shell (HTML/CSS/JS statici), non offline-first completo:
 // le vendite restano responsabilità della coda in queue.js, non di questo worker.
 // Aumentare CACHE_NAME ad ogni deploy per invalidare la cache dei client.
-const CACHE_NAME = 'cassa-sagra-v16';
+const CACHE_NAME = 'cassa-sagra-v17';
 
 // Elenco delle icone dei piatti, generato da tools/aggiorna-icone.sh: serve a
 // precaricarle all'installazione, così durante la sagra disegnare la griglia non
@@ -20,6 +20,9 @@ const APP_SHELL = [
   './js/queue.js',
   './js/router.js',
   './js/alerts.js',
+  './js/vendor/jspdf.umd.min.js',
+  './js/report.js',
+  './js/chiusura-cassa.js',
   './js/view-login.js',
   './js/view-cassa.js',
   './js/view-tesoriere.js',
