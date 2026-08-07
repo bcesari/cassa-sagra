@@ -98,6 +98,17 @@ const Queue = (function () {
     });
   }
 
+  async function getOne_(venditaId) {
+    const db = await openDb();
+    if (!db) return readLs().find((v) => v.vendita_id === venditaId) || null;
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE, 'readonly');
+      const req = tx.objectStore(STORE).get(venditaId);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    });
+  }
+
   function notify() {
     getAll().then((pending) => listeners.forEach((fn) => fn(pending.length)));
   }
@@ -144,7 +155,21 @@ const Queue = (function () {
           // riscontrato durante il testing di questa stessa modifica).
           const res = item.tipo === 'annulla' ? await Api.annullaVendita(item) : await Api.registraVendita(item);
           if (res && res.ok) {
-            await remove(item.vendita_id);
+            // Non un remove incondizionato: se nel frattempo (mentre questo
+            // invio era in volo, rete lenta) l'utente ha premuto "Annulla
+            // ultimo ordine", Queue.annulla() ha già sovrascritto questa
+            // voce in coda con tipo:'annulla' — rimuoverla comunque a
+            // registrazione confermata cancellerebbe l'intenzione di
+            // annullare prima ancora che venga spedita, lasciando la
+            // vendita attiva per sempre (bug reale riscontrato dal vivo con
+            // rete debole: "Registra" lento ancora in corso quando si preme
+            // "Annulla"). Si rimuove solo se il tipo in coda è ancora lo
+            // stesso di quello appena inviato — altrimenti resta, e verrà
+            // rispedita con l'azione corretta al giro successivo.
+            const attuale = await getOne_(item.vendita_id);
+            if (!attuale || attuale.tipo === item.tipo) {
+              await remove(item.vendita_id);
+            }
           }
         } catch (err) {
           // resta in coda, ritentata al prossimo giro
