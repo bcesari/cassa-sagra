@@ -79,6 +79,45 @@ function confermaAzione(messaggio) {
   });
 }
 
+// Selettore modale generico (titolo + elenco di scelte), stesso pattern di
+// apriSelettoreEmoji/confermaAzione: qui non un <select> nativo perché
+// l'attributo hidden su <option> — usato per nascondere un segnaposto
+// dall'elenco — non funziona su Safari/Chrome iOS (bug noto della
+// piattaforma, verificato dal vivo): il segnaposto ricompariva sempre nel
+// menu. Un pannello disegnato a mano non ha questo limite, su nessun
+// browser. `opzioni` è un elenco di {value, label}; `onScegli` riceve
+// l'opzione intera scelta.
+function apriSelettoreLista(titolo, opzioni, onScegli) {
+  const overlay = el('div', { class: 'overlay-emoji' });
+
+  function chiudi() {
+    overlay.remove();
+    document.removeEventListener('keydown', onEsc);
+  }
+  function onEsc(e) {
+    if (e.key === 'Escape') chiudi();
+  }
+  function scegli(opzione) {
+    onScegli(opzione);
+    chiudi();
+  }
+
+  const pannello = el('div', { class: 'pannello-selettore' }, [
+    el('div', { class: 'pannello-emoji-testa' }, [
+      el('strong', {}, [titolo]),
+      el('button', { type: 'button', class: 'bottone-link', onclick: chiudi }, ['Chiudi'])
+    ]),
+    el('div', { class: 'lista-selettore' }, opzioni.map((o) => el('button', {
+      type: 'button', class: 'voce-selettore', onclick: () => scegli(o)
+    }, [o.label])))
+  ]);
+
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) chiudi(); });
+  document.addEventListener('keydown', onEsc);
+  overlay.appendChild(pannello);
+  document.body.appendChild(overlay);
+}
+
 // L'icona di un piatto è una stringa nel foglio: o un'emoji (caso normale) o il
 // nome di un file dentro frontend/icons/piatti/ (le icone disegnate per la
 // sagra). Il file non viaggia mai nelle risposte dell'API — nel foglio e nella

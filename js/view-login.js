@@ -13,24 +13,31 @@ function renderLogin(container) {
     el('option', { value: 'responsabile' }, ['Stand'])
   ]);
 
-  // Tendina invece di un campo libero: un id digitato a mano (spazi,
-  // maiuscole, refusi) è un rischio inutile quando il server ha già
-  // l'elenco esatto.
-  // hidden (non disabled: un'opzione disabled non verrebbe scelta come
-  // valore iniziale, il browser selezionerebbe da solo il primo stand vero
-  // — stesso fix già applicato al selettore "a chi segnalare" in cassa,
-  // view-cassa.js): resta il testo/valore di partenza, ma non compare come
-  // voce cliccabile con la spunta quando si apre il menu.
-  const placeholderPiatto = el('option', { value: '', hidden: true }, ['Caricamento piatti…']);
-  const responsabilePiattoId = el('select', { id: 'login-piatto-id', class: 'nascosto' }, [placeholderPiatto]);
+  // Bottone che apre un pannello di scelta (apriSelettoreLista, utils.js)
+  // invece di un <select> nativo con un id digitato a mano (spazi,
+  // maiuscole, refusi sarebbero un rischio inutile quando il server ha già
+  // l'elenco esatto): un segnaposto nascosto con `hidden` su <option> non
+  // funziona su Safari/Chrome iOS (verificato dal vivo, ricompariva nel
+  // menu), il pannello non ha questo limite su nessun browser — stesso fix
+  // già applicato al selettore "a chi segnalare" in cassa (view-cassa.js).
+  let standSelezionato = '';
+  let opzioniStand = [];
+  const responsabilePiattoId = el('button', { type: 'button', class: 'bottone-selettore nascosto' }, ['Caricamento piatti…']);
+  responsabilePiattoId.disabled = true;
+  responsabilePiattoId.addEventListener('click', () => {
+    if (opzioniStand.length === 0) return;
+    apriSelettoreLista('Scegli lo stand', opzioniStand, (o) => {
+      standSelezionato = o.value;
+      responsabilePiattoId.textContent = o.label;
+    });
+  });
 
   let piattiRichiesti = false;
   async function caricaPiattiResponsabile() {
     if (piattiRichiesti) return;
     piattiRichiesti = true;
-    // Pulizia di un eventuale tentativo precedente fallito, prima di riprovare.
-    Array.from(responsabilePiattoId.children).forEach((opt) => { if (opt !== placeholderPiatto) opt.remove(); });
-    placeholderPiatto.textContent = 'Caricamento piatti…';
+    responsabilePiattoId.textContent = 'Caricamento piatti…';
+    responsabilePiattoId.disabled = true;
     try {
       const piatti = (await Api.piattiResponsabili()).piatti || [];
 
@@ -38,31 +45,27 @@ function renderLogin(container) {
       // una sola voce nel menu ("Sagne"): chi ha il PIN di uno qualsiasi dei
       // due entra comunque nella stessa vista di gruppo, non deve indovinare
       // quale dei due scegliere.
-      opzioniResponsabili(piatti).forEach((o) => {
-        responsabilePiattoId.appendChild(el('option', { value: o.value }, [o.label]));
-      });
-
-      placeholderPiatto.textContent = 'Scegli stand';
+      opzioniStand = opzioniResponsabili(piatti);
+      standSelezionato = '';
+      responsabilePiattoId.textContent = 'Scegli stand';
+      responsabilePiattoId.disabled = false;
     } catch (err) {
       // Fallito il caricamento: si può ancora riprovare cambiando ruolo e
-      // tornando su "Responsabile Piatto", che rilancia il caricamento.
+      // tornando su "Stand", che rilancia il caricamento.
       piattiRichiesti = false;
-      placeholderPiatto.textContent = 'Errore nel caricamento, riprova';
+      responsabilePiattoId.textContent = 'Errore nel caricamento, riprova';
     }
   }
-  // Avviato subito, non solo quando si sceglie "Responsabile Piatto": così i
-  // piatti sono già pronti nel momento in cui servono, invece di far
-  // aspettare la chiamata da quel momento (percepito come lentezza del menu).
+  // Avviato subito, non solo quando si sceglie "Stand": così i piatti sono
+  // già pronti nel momento in cui servono, invece di far aspettare la
+  // chiamata da quel momento (percepito come lentezza del menu).
   caricaPiattiResponsabile();
 
   // Il blur subito dopo la scelta toglie l'anello di focus blu del browser,
   // che altrimenti resta acceso sul <select> finché non si tocca dell'altro:
   // non è lentezza vera, ma dà quella sensazione.
-  [ruoloSelect, responsabilePiattoId].forEach((sel) => {
-    sel.addEventListener('change', () => sel.blur());
-  });
-
   ruoloSelect.addEventListener('change', () => {
+    ruoloSelect.blur();
     const isResponsabile = ruoloSelect.value === 'responsabile';
     responsabilePiattoId.classList.toggle('nascosto', !isResponsabile);
     if (isResponsabile) caricaPiattiResponsabile();
@@ -87,7 +90,7 @@ function renderLogin(container) {
       try {
         const ruoloBase = ruoloSelect.value;
         const ruoloId = ruoloBase === 'responsabile'
-          ? 'responsabile_' + responsabilePiattoId.value.trim()
+          ? 'responsabile_' + standSelezionato.trim()
           : ruoloBase;
         const pin = pinInput.value.trim();
 

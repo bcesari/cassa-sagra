@@ -50,14 +50,15 @@ const Alerts = {
   // `destinatario` può essere una stringa fissa (uso esistente: cassa->
   // tesoriere, responsabile->tutte_le_casse) oppure una funzione richiamata
   // al momento dell'invio, per leggere una scelta fatta in un `selettore`
-  // (es. "a quale responsabile" in cassa) senza duplicare qui la logica di
+  // (es. "a quale stand" in cassa/login) senza duplicare qui la logica di
   // invio/errore/disabilitazione. `selettore`, se passato, è un elemento già
-  // pronto (tipicamente un <select>) inserito prima del campo testo.
+  // pronto (un bottone che apre apriSelettoreLista, utils.js — non un
+  // <select> nativo, vedi il commento lì) inserito prima del campo testo.
   renderInvioForm(container, mittente, destinatario, placeholder, selettore) {
     const input = el('input', { type: 'text', placeholder });
     const esito = el('div', { class: 'errore nascosto' });
     const bottone = el('button', {
-      class: 'bottone-secondario',
+      class: 'bottone-secondario bottone-invia',
       onclick: async () => {
         const messaggio = input.value.trim();
         if (!messaggio) return;

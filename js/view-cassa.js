@@ -167,33 +167,38 @@ function renderCassa(container) {
   const segnalazione = el('div', { class: 'segnalazione-tesoriere' });
   Alerts.renderInvioForm(segnalazione, ruolo.ruolo_id, 'tesoriere', 'Segnala all\'amministratore');
 
-  // Elenco responsabili caricato subito, non al primo utilizzo: stesso
-  // motivo del caricamento eager in view-login.js, così è già pronto quando
-  // il cassiere vuole segnalare qualcosa.
-  // hidden (non disabled: un'opzione disabled non verrebbe scelta come
-  // valore iniziale, il browser selezionerebbe da sola il primo stand vero
-  // — sbagliato, va scelto esplicitamente): resta il valore selezionato di
-  // default e il testo mostrato finché non si sceglie uno stand, ma non
-  // compare come voce cliccabile (con la spunta di "selezione corrente")
-  // quando si apre il menu.
-  const placeholderResponsabile = el('option', { value: '', hidden: true }, ['Caricamento piatti…']);
-  const selettoreResponsabile = el('select', {}, [placeholderResponsabile]);
-  Api.piattiResponsabili().then((res) => {
-    opzioniResponsabili(res.piatti || []).forEach((o) => {
-      selettoreResponsabile.appendChild(el('option', { value: o.value }, [o.label]));
+  // Elenco stand caricato subito, non al primo utilizzo: stesso motivo del
+  // caricamento eager in view-login.js, così è già pronto quando il
+  // cassiere vuole segnalare qualcosa. Pannello personalizzato
+  // (apriSelettoreLista, utils.js) invece di un <select> nativo: un
+  // segnaposto nascosto con `hidden` su <option> non funziona su
+  // Safari/Chrome iOS (verificato dal vivo), il pannello non ha questo
+  // limite su nessun browser.
+  let standScelto = '';
+  let opzioniStand = [];
+  const bottoneStand = el('button', { type: 'button', class: 'bottone-selettore', disabled: true }, ['Caricamento piatti…']);
+  bottoneStand.addEventListener('click', () => {
+    if (opzioniStand.length === 0) return;
+    apriSelettoreLista('Segnala a quale stand?', opzioniStand, (o) => {
+      standScelto = o.value;
+      bottoneStand.textContent = o.label;
     });
-    placeholderResponsabile.textContent = 'Stand';
+  });
+  Api.piattiResponsabili().then((res) => {
+    opzioniStand = opzioniResponsabili(res.piatti || []);
+    bottoneStand.textContent = 'Stand';
+    bottoneStand.disabled = false;
   }).catch(() => {
-    placeholderResponsabile.textContent = 'Errore nel caricamento, ricarica la pagina';
+    bottoneStand.textContent = 'Errore nel caricamento, ricarica la pagina';
   });
 
   const segnalazioneResponsabile = el('div', { class: 'segnalazione-responsabile' });
   Alerts.renderInvioForm(
     segnalazioneResponsabile,
     ruolo.ruolo_id,
-    () => (selettoreResponsabile.value ? 'responsabile_' + selettoreResponsabile.value : ''),
+    () => (standScelto ? 'responsabile_' + standScelto : ''),
     'Messaggio',
-    selettoreResponsabile
+    bottoneStand
   );
 
   radice.appendChild(griglia);

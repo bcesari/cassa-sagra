@@ -161,13 +161,53 @@ button {
    (min-width: 0 permette a un elemento flex di andare sotto la sua
    larghezza di contenuto) invece di spezzarsi su una riga in più — sia col
    solo campo testo (segnalazione a tesoriere/broadcast) sia con
-   selettore+campo (segnalazione a un responsabile). Il bottone a larghezza
-   fissa fa sì che le due righe (col selettore e senza) si allineino sempre
-   sullo stesso bordo destro. */
+   selettore+campo (segnalazione a uno stand). Il bottone "Invia" a
+   larghezza fissa (.bottone-invia, non il generico "button": qui dentro c'è
+   anche il bottone-selettore, che deve restare largo come il select che
+   sostituisce) fa sì che le due righe si allineino sempre sullo stesso
+   bordo destro. */
 .invio-alert { display: flex; gap: 8px; margin-top: var(--spaziatura); }
 .invio-alert input { margin-bottom: 0; min-width: 0; flex: 2 1 0; }
-.invio-alert select { margin-bottom: 0; min-width: 0; flex: 1 1 0; }
-.invio-alert button { flex: 0 0 auto; width: 72px; padding-left: 8px; padding-right: 8px; }
+.invio-alert .bottone-selettore { margin-bottom: 0; min-width: 0; flex: 1 1 0; }
+.invio-alert .bottone-invia { flex: 0 0 auto; width: 72px; padding-left: 8px; padding-right: 8px; }
+
+/* Bottone che sostituisce un <select> nativo (apre apriSelettoreLista,
+   utils.js): stesso aspetto di un campo select vero, per non tradire
+   l'aspettativa visiva, ma senza il limite di iOS sul segnaposto. */
+.bottone-selettore {
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: var(--raggio);
+  padding: 10px 12px;
+  text-align: left;
+  color: var(--colore-testo);
+  font-weight: 400;
+}
+.bottone-selettore:disabled { color: #999; }
+
+.pannello-selettore {
+  background: white;
+  border-radius: var(--raggio);
+  padding: var(--spaziatura);
+  width: 100%;
+  max-width: 360px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.lista-selettore { display: flex; flex-direction: column; }
+.voce-selettore {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: white;
+  color: var(--colore-testo);
+  border: none;
+  border-bottom: 1px solid #eee;
+  border-radius: 0;
+  padding: 14px 4px;
+}
+.voce-selettore:last-child { border-bottom: none; }
+.voce-selettore:active { background: #f5f5f5; }
 
 /* Griglia piatti: si adatta da sola a telefono (2-3 colonne) e tablet (4-6) */
 .griglia-piatti {
