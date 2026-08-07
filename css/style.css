@@ -244,6 +244,24 @@ button {
   padding: var(--spaziatura);
   margin-bottom: var(--spaziatura);
 }
+/* Titolo di sezione cliccabile (apertura/chiusura casse): stessa dimensione
+   di h2, ma è un bottone che apre/chiude il contenuto sotto — resta a
+   contatto visivo con lo stile "titolo", non un bottone d'azione qualunque
+   come .bottone-primario/.bottone-secondario. */
+.intestazione-pieghevole {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0 0 8px;
+  text-align: left;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--colore-testo);
+}
+.intestazione-pieghevole:active { opacity: 0.7; }
+.intestazione-pieghevole .nota { font-size: 0.85rem; font-weight: 400; margin-top: 0; }
 .riga-dato { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; }
 .riga-dato:last-child { border-bottom: none; }
 /* Il valore vero (non sempre l'ultimo span: nella riga presenze il dato

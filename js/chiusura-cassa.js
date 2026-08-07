@@ -5,6 +5,37 @@
 // cancellerebbe l'input. Il ridisegno avviene solo dopo un salvataggio,
 // azione esplicita dell'utente.
 const ChiusuraCasse = (function () {
+  // Stato di apertura/chiusura delle due sezioni pieghevoli, tenuto nel
+  // closure (non dentro render()) così sopravvive a ricarica() dopo un
+  // salvataggio: senza, ogni salvataggio richiuderebbe la sezione appena
+  // usata. Collassate di default al primo caricamento della pagina — è
+  // quello che tiene corta la scheda Amministratore.
+  let apertaEspansa = false;
+  let chiusuraEspansa = false;
+
+  // Titolo cliccabile che mostra/nasconde `contenuto` con la classe
+  // `nascosto` già usata ovunque nel progetto (queue.js, view-login.js, …).
+  // Deliberatamente NON richiama ricarica(): un giro di rete in più e,
+  // soprattutto, ricostruire il DOM cancellerebbe input non ancora salvati
+  // nell'altra sezione se l'utente la sta compilando in parallelo (stesso
+  // motivo per cui questo intero container è già separato dal poll di
+  // view-tesoriere.js, vedi commento in testa al file).
+  function sezionePieghevole(titolo, sottotitolo, espansaInizialmente, contenuto, onToggle) {
+    const corpo = el('div', { class: espansaInizialmente ? '' : 'nascosto' }, [contenuto]);
+    const testoBottone = (espansa) => [`${espansa ? '▾' : '▸'} ${titolo}`, el('span', { class: 'nota' }, [` — ${sottotitolo}`])];
+    const bottone = el('button', { type: 'button', class: 'intestazione-pieghevole' }, testoBottone(espansaInizialmente));
+
+    bottone.addEventListener('click', () => {
+      const oraNascosto = corpo.classList.toggle('nascosto');
+      const espansa = !oraNascosto;
+      bottone.innerHTML = '';
+      testoBottone(espansa).forEach((n) => bottone.appendChild(typeof n === 'string' ? document.createTextNode(n) : n));
+      onToggle(espansa);
+    });
+
+    return el('div', { class: 'sezione' }, [bottone, corpo]);
+  }
+
   async function render(container, edizioneId) {
     container.innerHTML = 'Caricamento casse…';
     let stato;
@@ -38,15 +69,23 @@ const ChiusuraCasse = (function () {
     }
 
     const ricarica = () => render(container, edizioneId);
+    const aperte = stato.casse.filter((c) => c.aperta).length;
+    const chiuse = stato.casse.filter((c) => c.chiusa).length;
     container.innerHTML = '';
-    container.appendChild(sezioneApertura(stato, edizioneId, ricarica));
-    container.appendChild(sezioneChiusura(stato, report, edizioneId, ricarica));
+    container.appendChild(sezionePieghevole(
+      'Apertura casse', `${aperte}/${stato.casse.length} aperte`, apertaEspansa,
+      sezioneApertura(stato, edizioneId, ricarica), (v) => { apertaEspansa = v; }
+    ));
+    container.appendChild(sezionePieghevole(
+      'Chiusura casse', `${chiuse}/${stato.casse.length} chiuse`, chiusuraEspansa,
+      sezioneChiusura(stato, report, edizioneId, ricarica), (v) => { chiusuraEspansa = v; }
+    ));
     container.appendChild(sezioneReport(edizioneId));
   }
 
   function sezioneApertura(stato, edizioneId, ricarica) {
     const errore = el('div', { class: 'errore' }, []);
-    const sezione = el('div', { class: 'sezione' }, [el('h2', {}, ['Apertura casse']), errore]);
+    const sezione = el('div', {}, [errore]);
     const piatti = stato.piatti.slice().sort((a, b) => a.ordine_visualizzazione - b.ordine_visualizzazione);
 
     stato.casse.forEach((c) => {
@@ -171,7 +210,7 @@ const ChiusuraCasse = (function () {
 
   function sezioneChiusura(stato, report, edizioneId, ricarica) {
     const errore = el('div', { class: 'errore' }, []);
-    const sezione = el('div', { class: 'sezione' }, [el('h2', {}, ['Chiusura casse']), errore]);
+    const sezione = el('div', {}, [errore]);
     const piatti = stato.piatti.slice().sort((a, b) => a.ordine_visualizzazione - b.ordine_visualizzazione);
 
     stato.casse.forEach((c) => {
