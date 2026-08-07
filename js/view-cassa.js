@@ -170,7 +170,13 @@ function renderCassa(container) {
   // Elenco responsabili caricato subito, non al primo utilizzo: stesso
   // motivo del caricamento eager in view-login.js, così è già pronto quando
   // il cassiere vuole segnalare qualcosa.
-  const placeholderResponsabile = el('option', { value: '' }, ['Caricamento piatti…']);
+  // hidden (non disabled: un'opzione disabled non verrebbe scelta come
+  // valore iniziale, il browser selezionerebbe da sola il primo stand vero
+  // — sbagliato, va scelto esplicitamente): resta il valore selezionato di
+  // default e il testo mostrato finché non si sceglie uno stand, ma non
+  // compare come voce cliccabile (con la spunta di "selezione corrente")
+  // quando si apre il menu.
+  const placeholderResponsabile = el('option', { value: '', hidden: true }, ['Caricamento piatti…']);
   const selettoreResponsabile = el('select', {}, [placeholderResponsabile]);
   Api.piattiResponsabili().then((res) => {
     opzioniResponsabili(res.piatti || []).forEach((o) => {
