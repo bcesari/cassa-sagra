@@ -35,20 +35,40 @@ const Queue = (function () {
     localStorage.setItem(LS_KEY, JSON.stringify(list));
   }
 
+  // `tipo: 'registra'` di default (spread dopo, così un chiamante può
+  // sovrascriverlo — vedi `annulla` sotto): trySync guarda questo campo per
+  // sapere quale azione dell'API richiamare.
   async function add(vendita) {
+    const item = { tipo: 'registra', ...vendita };
     const db = await openDb();
     if (!db) {
-      writeLs([...readLs().filter((v) => v.vendita_id !== vendita.vendita_id), vendita]);
+      writeLs([...readLs().filter((v) => v.vendita_id !== item.vendita_id), item]);
       notify();
       return;
     }
     await new Promise((resolve) => {
       const tx = db.transaction(STORE, 'readwrite');
-      tx.objectStore(STORE).put(vendita);
+      tx.objectStore(STORE).put(item);
       tx.oncomplete = resolve;
       tx.onerror = resolve;
     });
     notify();
+  }
+
+  // "Annulla ultimo ordine" (view-cassa.js): converte l'elemento in coda per
+  // questo vendita_id in una richiesta di annullamento invece che di
+  // registrazione — stessa chiave (vendita_id), quindi se la vendita
+  // originale era ancora in coda (mai arrivata al server) viene sovrascritta
+  // qui e non verrà più inviata come registrazione. trySync la manda con
+  // annullaVendita al posto di registraVendita (gestisce correttamente anche
+  // il caso "mai arrivata", vedi worker-d1/src/vendite.js) — stessa
+  // resilienza offline già garantita per le registrazioni, prima mancante
+  // qui: annullare a rete debole/assente falliva silenziosamente (la
+  // chiamata diretta al server non riusciva) e la vendita originale finiva
+  // comunque per essere inviata al ristabilirsi della connessione, come se
+  // "annulla" non fosse mai stato premuto (bug reale riscontrato dal vivo).
+  function annulla(vendita) {
+    return add({ ...vendita, tipo: 'annulla' });
   }
 
   async function remove(venditaId) {
@@ -114,11 +134,17 @@ const Queue = (function () {
     syncing = true;
     try {
       const pending = await getAll();
-      await elaboraConLimite_(pending, MAX_INVII_PARALLELI, async (vendita) => {
+      await elaboraConLimite_(pending, MAX_INVII_PARALLELI, async (item) => {
         try {
-          const res = await Api.registraVendita(vendita);
+          // Chiamata diretta come Api.xxx(item), non tramite una variabile
+          // intermedia: Api.registraVendita/annullaVendita usano internamente
+          // this._post(...), e un riferimento estratto (`const azione = Api.x`)
+          // perderebbe il binding di `this`, facendo fallire silenziosamente
+          // ogni tentativo con "this._post is not a function" (bug reale
+          // riscontrato durante il testing di questa stessa modifica).
+          const res = item.tipo === 'annulla' ? await Api.annullaVendita(item) : await Api.registraVendita(item);
           if (res && res.ok) {
-            await remove(vendita.vendita_id);
+            await remove(item.vendita_id);
           }
         } catch (err) {
           // resta in coda, ritentata al prossimo giro
@@ -135,5 +161,5 @@ const Queue = (function () {
     trySync();
   }
 
-  return { add, remove, getAll, trySync, start, onChange };
+  return { add, annulla, remove, getAll, trySync, start, onChange };
 })();

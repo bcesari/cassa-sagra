@@ -195,20 +195,24 @@ function renderCassa(container) {
       erroreRegistra.classList.add('nascosto');
       bottoneAnnullaUltimo.disabled = true;
       try {
-        // Il server prima: se poi togliere la vendita dalla coda locale
-        // fallisse per qualche motivo, un eventuale reinvio in ritardo
-        // troverebbe comunque la riga già segnata annullata e non farebbe
-        // nulla (vedi annullaVendita in worker-d1/src/vendite.js) — la
-        // correttezza non dipende dal secondo passo.
-        await Api.annullaVendita(ultima);
+        // In coda, non una chiamata diretta al server: stessa logica già
+        // usata per "Registra vendita", l'annullamento non deve mai
+        // dipendere da una risposta di rete immediata. Se la rete è
+        // debole/assente, Queue.trySync() ritenta in background finché non
+        // riesce — annullaVendita gestisce correttamente anche il caso in
+        // cui la vendita originale non sia mai arrivata al server (vedi il
+        // suo commento in worker-d1/src/vendite.js).
+        await Queue.annulla(ultima);
       } catch (err) {
-        erroreRegistra.textContent = 'Annullamento NON riuscito, riprova.';
+        erroreRegistra.textContent = 'Annullamento NON riuscito: memoria del dispositivo non disponibile. Segna l\'ordine su carta e avvisa l\'amministratore.';
         erroreRegistra.classList.remove('nascosto');
         bottoneAnnullaUltimo.disabled = false;
         return;
       }
 
-      await Queue.remove(ultima.vendita_id);
+      // Da qui in poi l'annullamento è al sicuro in coda: trySync inghiotte
+      // già i propri errori e ritenta in background, quindi non va atteso.
+      Queue.trySync();
 
       const ordineRestaurato = {};
       (ultima.righe || []).forEach((r) => { ordineRestaurato[r.piatto_id] = r.quantita; });
