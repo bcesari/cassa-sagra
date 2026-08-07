@@ -165,7 +165,7 @@ function renderCassa(container) {
   }, ['Registra vendita']);
 
   const segnalazione = el('div', { class: 'segnalazione-tesoriere' });
-  Alerts.renderInvioForm(segnalazione, ruolo.ruolo_id, 'tesoriere', 'Segnala all\'amministratore (es. blocchetti in esaurimento)');
+  Alerts.renderInvioForm(segnalazione, ruolo.ruolo_id, 'tesoriere', 'Segnala all\'amministratore');
 
   // Elenco responsabili caricato subito, non al primo utilizzo: stesso
   // motivo del caricamento eager in view-login.js, così è già pronto quando
@@ -176,7 +176,7 @@ function renderCassa(container) {
     opzioniResponsabili(res.piatti || []).forEach((o) => {
       selettoreResponsabile.appendChild(el('option', { value: o.value }, [o.label]));
     });
-    placeholderResponsabile.textContent = '— scegli il responsabile —';
+    placeholderResponsabile.textContent = 'Responsabile';
   }).catch(() => {
     placeholderResponsabile.textContent = 'Errore nel caricamento, ricarica la pagina';
   });
@@ -186,7 +186,7 @@ function renderCassa(container) {
     segnalazioneResponsabile,
     ruolo.ruolo_id,
     () => (selettoreResponsabile.value ? 'responsabile_' + selettoreResponsabile.value : ''),
-    'Messaggio per il responsabile',
+    'Messaggio',
     selettoreResponsabile
   );
 
