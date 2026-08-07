@@ -10,6 +10,28 @@ function capitalizza(s) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
+// Da un elenco di piatti (Api.piattiResponsabili) a opzioni per un <select>:
+// più piatti con lo stesso gruppo (es. sagne bianche/rosse) diventano una
+// sola voce ("Sagne"), gli altri restano singoli. Usata sia dal menu di
+// login "Responsabile Piatto" (view-login.js) sia dal selettore "a chi
+// segnalare" in cassa (view-cassa.js) — stesso identico raggruppamento,
+// perché entrambi devono produrre un identificativo che il server accetta
+// come piatto_id o come "gruppo:<nome>".
+function opzioniResponsabili(piatti) {
+  const gruppiVisti = new Set();
+  const opzioni = [];
+  (piatti || []).forEach((p) => {
+    if (p.gruppo) {
+      if (gruppiVisti.has(p.gruppo)) return;
+      gruppiVisti.add(p.gruppo);
+      opzioni.push({ value: 'gruppo:' + p.gruppo, label: capitalizza(p.gruppo) });
+    } else {
+      opzioni.push({ value: p.piatto_id, label: p.nome_piatto || p.piatto_id });
+    }
+  });
+  return opzioni;
+}
+
 function formatEuro(n) {
   const v = Number(n) || 0;
   return '€ ' + v.toFixed(2).replace('.', ',');

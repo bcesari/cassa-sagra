@@ -32,16 +32,9 @@ function renderLogin(container) {
       // Più piatti con lo stesso gruppo (es. sagne bianche/rosse) diventano
       // una sola voce nel menu ("Sagne"): chi ha il PIN di uno qualsiasi dei
       // due entra comunque nella stessa vista di gruppo, non deve indovinare
-      // quale dei due scegliere. gruppiVisti evita di ripetere la voce.
-      const gruppiVisti = new Set();
-      piatti.forEach((p) => {
-        if (p.gruppo) {
-          if (gruppiVisti.has(p.gruppo)) return;
-          gruppiVisti.add(p.gruppo);
-          responsabilePiattoId.appendChild(el('option', { value: 'gruppo:' + p.gruppo }, [capitalizza(p.gruppo)]));
-        } else {
-          responsabilePiattoId.appendChild(el('option', { value: p.piatto_id }, [p.nome_piatto || p.piatto_id]));
-        }
+      // quale dei due scegliere.
+      opzioniResponsabili(piatti).forEach((o) => {
+        responsabilePiattoId.appendChild(el('option', { value: o.value }, [o.label]));
       });
 
       placeholderPiatto.textContent = '— scegli il piatto —';

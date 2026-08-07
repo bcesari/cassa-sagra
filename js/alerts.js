@@ -47,7 +47,13 @@ const Alerts = {
     Router.setPoll(setInterval(poll, CONFIG.POLL_INTERVAL_MS));
   },
 
-  renderInvioForm(container, mittente, destinatario, placeholder) {
+  // `destinatario` può essere una stringa fissa (uso esistente: cassa->
+  // tesoriere, responsabile->tutte_le_casse) oppure una funzione richiamata
+  // al momento dell'invio, per leggere una scelta fatta in un `selettore`
+  // (es. "a quale responsabile" in cassa) senza duplicare qui la logica di
+  // invio/errore/disabilitazione. `selettore`, se passato, è un elemento già
+  // pronto (tipicamente un <select>) inserito prima del campo testo.
+  renderInvioForm(container, mittente, destinatario, placeholder, selettore) {
     const input = el('input', { type: 'text', placeholder });
     const esito = el('div', { class: 'errore nascosto' });
     const bottone = el('button', {
@@ -55,6 +61,12 @@ const Alerts = {
       onclick: async () => {
         const messaggio = input.value.trim();
         if (!messaggio) return;
+        const dest = typeof destinatario === 'function' ? destinatario() : destinatario;
+        if (!dest) {
+          esito.textContent = 'Scegli prima un destinatario.';
+          esito.classList.remove('nascosto');
+          return;
+        }
         esito.classList.add('nascosto');
         bottone.disabled = true;
         try {
@@ -62,7 +74,7 @@ const Alerts = {
             alert_id: uuidv4(),
             edizione_id: State.getEdizione().edizione_id,
             mittente,
-            destinatario,
+            destinatario: dest,
             messaggio,
             timestamp_iso: new Date().toISOString()
           });
@@ -75,7 +87,7 @@ const Alerts = {
         }
       }
     }, ['Invia segnalazione']);
-    container.appendChild(el('div', { class: 'invio-alert' }, [input, bottone]));
+    container.appendChild(el('div', { class: 'invio-alert' }, [selettore, input, bottone].filter(Boolean)));
     container.appendChild(esito);
   }
 };

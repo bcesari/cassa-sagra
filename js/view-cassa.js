@@ -167,6 +167,29 @@ function renderCassa(container) {
   const segnalazione = el('div', { class: 'segnalazione-tesoriere' });
   Alerts.renderInvioForm(segnalazione, ruolo.ruolo_id, 'tesoriere', 'Segnala all\'amministratore (es. blocchetti in esaurimento)');
 
+  // Elenco responsabili caricato subito, non al primo utilizzo: stesso
+  // motivo del caricamento eager in view-login.js, così è già pronto quando
+  // il cassiere vuole segnalare qualcosa.
+  const placeholderResponsabile = el('option', { value: '' }, ['Caricamento piatti…']);
+  const selettoreResponsabile = el('select', {}, [placeholderResponsabile]);
+  Api.piattiResponsabili().then((res) => {
+    opzioniResponsabili(res.piatti || []).forEach((o) => {
+      selettoreResponsabile.appendChild(el('option', { value: o.value }, [o.label]));
+    });
+    placeholderResponsabile.textContent = '— scegli il responsabile —';
+  }).catch(() => {
+    placeholderResponsabile.textContent = 'Errore nel caricamento, ricarica la pagina';
+  });
+
+  const segnalazioneResponsabile = el('div', { class: 'segnalazione-responsabile' });
+  Alerts.renderInvioForm(
+    segnalazioneResponsabile,
+    ruolo.ruolo_id,
+    () => (selettoreResponsabile.value ? 'responsabile_' + selettoreResponsabile.value : ''),
+    'Messaggio per il responsabile',
+    selettoreResponsabile
+  );
+
   radice.appendChild(griglia);
   radice.appendChild(el('div', { class: 'riepilogo-box' }, [
     riepilogo,
@@ -177,6 +200,7 @@ function renderCassa(container) {
     el('div', { class: 'azioni-ordine' }, [bottoneRegistra])
   ]));
   radice.appendChild(segnalazione);
+  radice.appendChild(segnalazioneResponsabile);
 
   disegnaGriglia();
   disegnaRiepilogo();

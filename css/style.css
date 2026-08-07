@@ -157,8 +157,12 @@ button {
   padding: 4px;
 }
 
-.invio-alert { display: flex; gap: 8px; margin-top: var(--spaziatura); }
-.invio-alert input { margin-bottom: 0; flex: 1; }
+/* flex-wrap: con selettore+input+bottone (segnalazione a un responsabile) su
+   schermi stretti il selettore va a capo invece di schiacciare tutto — le
+   righe a 2 soli elementi (input+bottone) restano identiche a prima, c'è già
+   spazio a sufficienza. */
+.invio-alert { display: flex; flex-wrap: wrap; gap: 8px; margin-top: var(--spaziatura); }
+.invio-alert input, .invio-alert select { margin-bottom: 0; flex: 1 1 140px; }
 
 /* Griglia piatti: si adatta da sola a telefono (2-3 colonne) e tablet (4-6) */
 .griglia-piatti {

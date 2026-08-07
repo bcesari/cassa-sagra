@@ -16,6 +16,8 @@ function renderResponsabile(container) {
   const radice = el('div', { class: 'vista-responsabile' });
   container.appendChild(radice);
 
+  Alerts.renderBanner(radice, ruolo.ruolo_id, edizione.edizione_id);
+
   radice.appendChild(el('div', { class: 'intestazione' }, [
     el('h1', {}, [
       el('img', { src: 'icons/monogramma-ponte.webp', alt: '', class: 'icona-testata' }),
