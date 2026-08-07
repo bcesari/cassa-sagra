@@ -86,6 +86,12 @@ const Api = {
     const qs = new URLSearchParams({ action: 'piattiResponsabili' });
     return fetchJson_(`${CONFIG.API_URL}?${qs.toString()}`);
   },
+  // Senza ruolo/pin apposta: la chiave pubblica VAPID non è un segreto, e
+  // serve prima ancora di poter chiamare azioni autenticate.
+  vapidPublicKey() {
+    const qs = new URLSearchParams({ action: 'vapidPublicKey' });
+    return fetchJson_(`${CONFIG.API_URL}?${qs.toString()}`);
+  },
   edizioneCorrente() { return this._get('edizioneCorrente'); },
   listino(edizioneId) { return this._get('listino', { edizione: edizioneId }); },
   tesoriere(edizioneId) { return this._get('tesoriere', { edizione: edizioneId }); },
@@ -100,5 +106,6 @@ const Api = {
   statoCasse(edizioneId) { return this._get('statoCasse', { edizione: edizioneId }); },
   apriCassa(payload) { return this._post('apriCassa', payload); },
   chiudiCassa(payload) { return this._post('chiudiCassa', payload); },
-  reportServata(edizioneId) { return this._get('reportServata', { edizione: edizioneId }); }
+  reportServata(edizioneId) { return this._get('reportServata', { edizione: edizioneId }); },
+  salvaPushSubscription(payload) { return this._post('salvaPushSubscription', payload); }
 };

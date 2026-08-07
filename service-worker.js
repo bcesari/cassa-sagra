@@ -1,7 +1,7 @@
 // Cache solo dell'app-shell (HTML/CSS/JS statici), non offline-first completo:
 // le vendite restano responsabilità della coda in queue.js, non di questo worker.
 // Aumentare CACHE_NAME ad ogni deploy per invalidare la cache dei client.
-const CACHE_NAME = 'cassa-sagra-v20';
+const CACHE_NAME = 'cassa-sagra-v21';
 
 // Elenco delle icone dei piatti, generato da tools/aggiorna-icone.sh: serve a
 // precaricarle all'installazione, così durante la sagra disegnare la griglia non
@@ -20,6 +20,7 @@ const APP_SHELL = [
   './js/queue.js',
   './js/router.js',
   './js/alerts.js',
+  './js/push.js',
   './js/vendor/jspdf.umd.min.js',
   './js/report.js',
   './js/chiusura-cassa.js',
@@ -60,6 +61,30 @@ self.addEventListener('activate', (event) => {
     caches.keys()
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
+  );
+});
+
+// Notifiche push (solo Amministratore, vedi frontend/js/push.js): il payload
+// arriva già in chiaro qui (il browser lo decifra prima di consegnarlo al
+// service worker), stesso testo del banner in-app ("mittente: messaggio").
+self.addEventListener('push', (event) => {
+  let dati = {};
+  try { dati = event.data ? event.data.json() : {}; } catch (e) { /* payload non JSON, ignorato */ }
+  event.waitUntil(self.registration.showNotification(dati.titolo || 'Cassa Sagra', {
+    body: dati.corpo || '',
+    icon: './icons/icon-192.png',
+    badge: './icons/icon-192.png'
+  }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((elenco) => {
+      const aperta = elenco.find((c) => c.url.includes(location.origin));
+      if (aperta) return aperta.focus();
+      return clients.openWindow('./');
+    })
   );
 });
 

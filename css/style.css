@@ -130,6 +130,9 @@ button {
   margin-bottom: var(--spaziatura);
 }
 
+.notifiche-push { margin-bottom: var(--spaziatura); }
+.notifiche-push .nota { margin-top: 0; }
+
 /* Alert banner */
 .alert-banner {
   background: #fdecea;

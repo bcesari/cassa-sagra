@@ -19,6 +19,8 @@ function renderTesoriere(container) {
     el('button', { class: 'bottone-link', onclick: () => Router.navigate('/login') }, ['Cambia utente'])
   ]));
 
+  renderNotifichePush(radice, edizione.edizione_id);
+
   const corpo = el('div', { class: 'tesoriere-corpo' }, ['Caricamento…']);
   radice.appendChild(corpo);
 
@@ -90,4 +92,51 @@ function renderTesoriere(container) {
 
   aggiorna();
   Router.setPoll(setInterval(aggiorna, CONFIG.POLL_INTERVAL_MS));
+}
+
+// Notifiche push per le segnalazioni cassa->tesoriere (push.js): utile
+// soprattutto per l'Amministratore, che gira con lo schermo spento/app in
+// background — le casse tengono il telefono acceso e vedono già il banner
+// in-app. Renderizzato una sola volta, non dentro aggiorna(): non dipende
+// dai dati che cambiano ogni 10s.
+function renderNotifichePush(radice, edizioneId) {
+  const box = el('div', { class: 'notifiche-push' }, []);
+  radice.appendChild(box);
+
+  async function disegna() {
+    box.innerHTML = '';
+    const s = await Push.stato();
+
+    if (s === 'non-supportato') {
+      box.appendChild(el('div', { class: 'nota' }, ['Notifiche non supportate su questo browser.']));
+      return;
+    }
+    if (s === 'negato') {
+      box.appendChild(el('div', { class: 'nota' }, ['🔕 Notifiche bloccate: riattivale dalle impostazioni del browser/telefono.']));
+      return;
+    }
+    if (s === 'attivo') {
+      box.appendChild(el('div', { class: 'nota' }, ['🔔 Notifiche attive su questo dispositivo.']));
+      return;
+    }
+
+    const errore = el('div', { class: 'errore nascosto' }, []);
+    const bottone = el('button', { type: 'button', class: 'bottone-secondario' }, ['🔔 Attiva notifiche']);
+    bottone.addEventListener('click', async () => {
+      errore.classList.add('nascosto');
+      bottone.disabled = true;
+      try {
+        await Push.iscrivi(edizioneId);
+        await disegna();
+      } catch (e) {
+        errore.textContent = 'Notifiche NON attivate: ' + e.message;
+        errore.classList.remove('nascosto');
+        bottone.disabled = false;
+      }
+    });
+    box.appendChild(bottone);
+    box.appendChild(errore);
+  }
+
+  disegna();
 }
