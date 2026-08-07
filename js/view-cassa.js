@@ -176,7 +176,7 @@ function renderCassa(container) {
     opzioniResponsabili(res.piatti || []).forEach((o) => {
       selettoreResponsabile.appendChild(el('option', { value: o.value }, [o.label]));
     });
-    placeholderResponsabile.textContent = 'Responsabile';
+    placeholderResponsabile.textContent = 'Stand';
   }).catch(() => {
     placeholderResponsabile.textContent = 'Errore nel caricamento, ricarica la pagina';
   });
