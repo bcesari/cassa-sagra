@@ -16,7 +16,12 @@ function renderLogin(container) {
   // Tendina invece di un campo libero: un id digitato a mano (spazi,
   // maiuscole, refusi) è un rischio inutile quando il server ha già
   // l'elenco esatto.
-  const placeholderPiatto = el('option', { value: '' }, ['Caricamento piatti…']);
+  // hidden (non disabled: un'opzione disabled non verrebbe scelta come
+  // valore iniziale, il browser selezionerebbe da solo il primo stand vero
+  // — stesso fix già applicato al selettore "a chi segnalare" in cassa,
+  // view-cassa.js): resta il testo/valore di partenza, ma non compare come
+  // voce cliccabile con la spunta quando si apre il menu.
+  const placeholderPiatto = el('option', { value: '', hidden: true }, ['Caricamento piatti…']);
   const responsabilePiattoId = el('select', { id: 'login-piatto-id', class: 'nascosto' }, [placeholderPiatto]);
 
   let piattiRichiesti = false;
@@ -37,7 +42,7 @@ function renderLogin(container) {
         responsabilePiattoId.appendChild(el('option', { value: o.value }, [o.label]));
       });
 
-      placeholderPiatto.textContent = '— scegli il piatto —';
+      placeholderPiatto.textContent = 'Scegli stand';
     } catch (err) {
       // Fallito il caricamento: si può ancora riprovare cambiando ruolo e
       // tornando su "Responsabile Piatto", che rilancia il caricamento.
