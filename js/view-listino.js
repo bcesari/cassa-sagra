@@ -165,7 +165,7 @@ function disegnaForm(corpo, edizione, piattiEsistenti) {
         }),
         el('input', {
           type: 'text', placeholder: 'Gruppo (opz.)', value: r.gruppo || '',
-          title: 'Piatti con lo stesso gruppo sono seguiti dallo stesso responsabile, che ne vede i totali separati (es. "sagne" su bianche e rosse). Lascia vuoto se il piatto sta a sé.',
+          title: 'Piatti con lo stesso gruppo sono seguiti dallo stesso stand, che ne vede i totali separati (es. "sagne" su bianche e rosse). Lascia vuoto se il piatto sta a sé.',
           oninput: (e) => { r.gruppo = e.target.value.trim().toLowerCase(); }
         }),
         el('input', {

@@ -10,7 +10,7 @@ function renderLogin(container) {
     el('option', { value: 'cassa_4' }, ['Cassa 4 Emanuele']),
     el('option', { value: 'tesoriere' }, ['Amministratore']),
     el('option', { value: 'admin_listino' }, ['Gestione Listino']),
-    el('option', { value: 'responsabile' }, ['Responsabile Piatto'])
+    el('option', { value: 'responsabile' }, ['Stand'])
   ]);
 
   // Tendina invece di un campo libero: un id digitato a mano (spazi,
