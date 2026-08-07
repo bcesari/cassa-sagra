@@ -157,12 +157,17 @@ button {
   padding: 4px;
 }
 
-/* flex-wrap: con selettore+input+bottone (segnalazione a un responsabile) su
-   schermi stretti il selettore va a capo invece di schiacciare tutto — le
-   righe a 2 soli elementi (input+bottone) restano identiche a prima, c'è già
-   spazio a sufficienza. */
-.invio-alert { display: flex; flex-wrap: wrap; gap: 8px; margin-top: var(--spaziatura); }
-.invio-alert input, .invio-alert select { margin-bottom: 0; flex: 1 1 140px; }
+/* Sempre una riga sola, mai a capo: selettore/campo testo si restringono
+   (min-width: 0 permette a un elemento flex di andare sotto la sua
+   larghezza di contenuto) invece di spezzarsi su una riga in più — sia col
+   solo campo testo (segnalazione a tesoriere/broadcast) sia con
+   selettore+campo (segnalazione a un responsabile). Il bottone a larghezza
+   fissa fa sì che le due righe (col selettore e senza) si allineino sempre
+   sullo stesso bordo destro. */
+.invio-alert { display: flex; gap: 8px; margin-top: var(--spaziatura); }
+.invio-alert input { margin-bottom: 0; min-width: 0; flex: 2 1 0; }
+.invio-alert select { margin-bottom: 0; min-width: 0; flex: 1 1 0; }
+.invio-alert button { flex: 0 0 auto; width: 72px; padding-left: 8px; padding-right: 8px; }
 
 /* Griglia piatti: si adatta da sola a telefono (2-3 colonne) e tablet (4-6) */
 .griglia-piatti {
@@ -224,7 +229,7 @@ button {
 .azioni-ordine .bottone-secondario { flex: 1; }
 .azioni-ordine .bottone-primario { flex: 2; }
 
-.segnalazione-tesoriere, .segnalazione-broadcast { margin-top: var(--spaziatura); }
+.segnalazione-tesoriere, .segnalazione-broadcast, .segnalazione-responsabile { margin-top: var(--spaziatura); }
 
 /* Tesoriere / Responsabile */
 /* Card evidenziata: è il primo numero che l'occhio deve trovare (come il

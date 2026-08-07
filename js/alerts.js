@@ -86,7 +86,7 @@ const Alerts = {
           bottone.disabled = false;
         }
       }
-    }, ['Invia segnalazione']);
+    }, ['Invia']);
     container.appendChild(el('div', { class: 'invio-alert' }, [selettore, input, bottone].filter(Boolean)));
     container.appendChild(esito);
   }
