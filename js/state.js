@@ -31,5 +31,18 @@ const State = {
   },
   clearOrdineCorrente() {
     localStorage.removeItem('sagra.ordineCorrente');
+  },
+
+  // Ultima vendita registrata da questa cassa, per "Annulla ultimo ordine"
+  // (view-cassa.js). In localStorage, non solo in memoria: sopravvive anche
+  // a un ricaricamento della pagina, non solo alla sessione corrente.
+  getUltimaVendita() {
+    try { return JSON.parse(localStorage.getItem('sagra.ultimaVendita')); } catch (e) { return null; }
+  },
+  setUltimaVendita(vendita) {
+    localStorage.setItem('sagra.ultimaVendita', JSON.stringify(vendita));
+  },
+  clearUltimaVendita() {
+    localStorage.removeItem('sagra.ultimaVendita');
   }
 };

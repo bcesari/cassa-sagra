@@ -158,11 +158,70 @@ function renderCassa(container) {
       // propri errori e ritenta in background, quindi non va atteso.
       Queue.trySync();
 
+      // Per "Annulla ultimo ordine": la vendita appena messa in coda, non
+      // ancora necessariamente confermata dal server (annullaVendita
+      // gestisce comunque entrambi i casi, vedi il suo commento in
+      // worker-d1/src/vendite.js).
+      State.setUltimaVendita(vendita);
+      aggiornaBottoneAnnulla();
+
       aggiornaOrdine({});
       contantiInput.value = '';
       restoEl.textContent = '';
     }
   }, ['Registra vendita']);
+
+  // Mostra/nasconde il pulsante di annullo in base a se esiste un'ultima
+  // vendita di QUESTA cassa da poter annullare — non un'altra (un cambio
+  // utente sullo stesso dispositivo pulisce State.ultimaVendita in
+  // view-login.js, ma questo controllo resta comunque come seconda difesa).
+  function aggiornaBottoneAnnulla() {
+    const ultima = State.getUltimaVendita();
+    const disponibile = !!(ultima && ultima.cassa === ruolo.ruolo_id);
+    bottoneAnnullaUltimo.classList.toggle('nascosto', !disponibile);
+  }
+
+  const bottoneAnnullaUltimo = el('button', {
+    type: 'button',
+    class: 'bottone-secondario bottone-annulla-ultimo nascosto',
+    title: 'Annulla ultimo ordine',
+    onclick: async () => {
+      const ultima = State.getUltimaVendita();
+      if (!ultima || ultima.cassa !== ruolo.ruolo_id) return;
+
+      const conferma = await confermaAzione('Sei sicuro di voler annullare l\'ultimo ordine?', 'Sì', 'No');
+      if (!conferma) return;
+
+      erroreRegistra.classList.add('nascosto');
+      bottoneAnnullaUltimo.disabled = true;
+      try {
+        // Il server prima: se poi togliere la vendita dalla coda locale
+        // fallisse per qualche motivo, un eventuale reinvio in ritardo
+        // troverebbe comunque la riga già segnata annullata e non farebbe
+        // nulla (vedi annullaVendita in worker-d1/src/vendite.js) — la
+        // correttezza non dipende dal secondo passo.
+        await Api.annullaVendita(ultima);
+      } catch (err) {
+        erroreRegistra.textContent = 'Annullamento NON riuscito, riprova.';
+        erroreRegistra.classList.remove('nascosto');
+        bottoneAnnullaUltimo.disabled = false;
+        return;
+      }
+
+      await Queue.remove(ultima.vendita_id);
+
+      const ordineRestaurato = {};
+      (ultima.righe || []).forEach((r) => { ordineRestaurato[r.piatto_id] = r.quantita; });
+      aggiornaOrdine(ordineRestaurato);
+      contantiInput.value = ultima.contanti_ricevuti === '' || ultima.contanti_ricevuti === null || ultima.contanti_ricevuti === undefined
+        ? '' : ultima.contanti_ricevuti;
+      aggiornaResto(totaleOrdine());
+
+      State.clearUltimaVendita();
+      bottoneAnnullaUltimo.disabled = false;
+      aggiornaBottoneAnnulla();
+    }
+  }, ['↩️']);
 
   const segnalazione = el('div', { class: 'segnalazione-tesoriere' });
   Alerts.renderInvioForm(segnalazione, ruolo.ruolo_id, 'tesoriere', 'Segnala all\'amministratore');
@@ -208,11 +267,12 @@ function renderCassa(container) {
     contantiInput,
     restoEl,
     erroreRegistra,
-    el('div', { class: 'azioni-ordine' }, [bottoneRegistra])
+    el('div', { class: 'azioni-ordine' }, [bottoneRegistra, bottoneAnnullaUltimo])
   ]));
   radice.appendChild(segnalazione);
   radice.appendChild(segnalazioneResponsabile);
 
   disegnaGriglia();
   disegnaRiepilogo();
+  aggiornaBottoneAnnulla();
 }

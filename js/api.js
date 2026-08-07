@@ -99,6 +99,7 @@ const Api = {
   alert(destinatario, edizioneId) { return this._get('alert', { destinatario, edizione: edizioneId }); },
 
   registraVendita(vendita) { return this._post('registraVendita', vendita); },
+  annullaVendita(vendita) { return this._post('annullaVendita', vendita); },
   inviaAlert(alert) { return this._post('inviaAlert', alert); },
   segnaAlertLetto(alertId) { return this._post('segnaAlertLetto', { alert_id: alertId }); },
   salvaListino(payload) { return this._post('salvaListino', payload); },

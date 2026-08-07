@@ -268,6 +268,10 @@ button {
 .azioni-ordine { display: flex; gap: 10px; }
 .azioni-ordine .bottone-secondario { flex: 1; }
 .azioni-ordine .bottone-primario { flex: 2; }
+/* "Annulla ultimo ordine": piccolo, a larghezza fissa (circa un quarto di
+   "Registra vendita"), non flex:1 come gli altri .bottone-secondario della
+   riga — va dopo quella regola per vincerla a parità di specificità. */
+.azioni-ordine .bottone-annulla-ultimo { flex: 0 0 auto; width: 56px; font-size: 1.3rem; padding: 0; }
 
 .segnalazione-tesoriere, .segnalazione-broadcast, .segnalazione-responsabile { margin-top: var(--spaziatura); }
 

@@ -2,6 +2,9 @@ Router.register('/login', renderLogin);
 
 function renderLogin(container) {
   State.clearRuolo();
+  // Un cambio cassa sullo stesso dispositivo non deve mai offrire di
+  // annullare la vendita della cassa precedente.
+  State.clearUltimaVendita();
 
   const ruoloSelect = el('select', { id: 'login-ruolo' }, [
     el('option', { value: 'cassa_1' }, ['Cassa 1 Mirko']),

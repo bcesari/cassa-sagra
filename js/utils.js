@@ -50,8 +50,10 @@ function formatData(isoString) {
 // Conferma con overlay personalizzato invece di window.confirm (mai usato in
 // questa app): stesso pattern del selettore icone in view-listino.js
 // (apriSelettoreEmoji), qui generalizzato per un semplice sì/no. Promise che
-// risolve true/false in base al bottone premuto.
-function confermaAzione(messaggio) {
+// risolve true/false in base al bottone premuto. testoConferma/testoAnnulla
+// opzionali (default invariati) per riusarla con etichette diverse, es.
+// "Sì"/"No" per l'annullo vendita in cassa.
+function confermaAzione(messaggio, testoConferma, testoAnnulla) {
   return new Promise((resolve) => {
     const overlay = el('div', { class: 'overlay-conferma' });
 
@@ -67,8 +69,8 @@ function confermaAzione(messaggio) {
     const pannello = el('div', { class: 'pannello-conferma' }, [
       el('p', {}, [messaggio]),
       el('div', { class: 'pannello-conferma-azioni' }, [
-        el('button', { type: 'button', class: 'bottone-secondario', onclick: () => chiudi(false) }, ['Annulla']),
-        el('button', { type: 'button', class: 'bottone-primario', onclick: () => chiudi(true) }, ['Conferma'])
+        el('button', { type: 'button', class: 'bottone-secondario', onclick: () => chiudi(false) }, [testoAnnulla || 'Annulla']),
+        el('button', { type: 'button', class: 'bottone-primario', onclick: () => chiudi(true) }, [testoConferma || 'Conferma'])
       ])
     ]);
 
