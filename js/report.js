@@ -326,21 +326,6 @@ const Report = (function () {
     doc.save(nomeFile);
   }
 
-  // PDF separato, generabile per singola cassa al momento della chiusura:
-  // stessa disegnaTabellaTicket già usata nel report generale, qui su un
-  // documento a parte con solo le righe di quella cassa.
-  function generaPdfTicketCassa(nomeCassa, righe) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-    const margineX = 40;
-    doc.setFontSize(16);
-    doc.setTextColor(COLORE_PRIMARIO);
-    doc.text(`Riscontro ticket — ${nomeCassa}`, margineX, 50);
-    disegnaTabellaTicket(doc, righe, margineX, 80);
-    const slug = nomeCassa.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-    doc.save(`riscontro-ticket-${slug}-${new Date().toISOString().slice(0, 10)}.pdf`);
-  }
-
   function disegnaTabellaChiusura(doc, casse, x, y) {
     doc.setFontSize(13);
     doc.setTextColor(COLORE_TESTO);
@@ -348,7 +333,10 @@ const Report = (function () {
     y += 14;
 
     const colonne = ['Cassa', 'Apertura', 'Chiusura', 'Fondo', 'Atteso', 'Contato', 'Differenza'];
-    const larghezze = [70, 60, 60, 55, 65, 65, 140];
+    // Cassa allargata (era 70pt: "Cassa 1 Mirko"/"Cassa 4 Emanuele" ci
+    // sovrapponevano sopra la colonna "Apertura" — nomi più lunghi delle
+    // vecchie "Cassa 1"..."Cassa 4"), resto ridistribuito per restare a 515pt.
+    const larghezze = [115, 55, 55, 50, 60, 60, 120];
     doc.setFontSize(9);
     doc.setTextColor('#777777');
     let cx = x;
@@ -363,7 +351,7 @@ const Report = (function () {
       doc.setFontSize(10);
       doc.setTextColor(COLORE_TESTO);
       const valori = [
-        c.nome_visualizzato,
+        tronca(c.nome_visualizzato, 18),
         c.orario_apertura ? formatOra(c.orario_apertura) : '—',
         c.orario_chiusura ? formatOra(c.orario_chiusura) : '—',
         formatEuro(c.fondo_iniziale || 0),
@@ -393,14 +381,18 @@ const Report = (function () {
     return y;
   }
 
+  // Usata solo nel report per singola cassa (generaPdfCassa): niente colonna
+  // "Cassa", il nome è già nel titolo del documento. "Consegnati" è
+  // puramente informativo — lo scostamento resta contati vs vendite app,
+  // stesso controllo incrociato con la matrice già validato in produzione.
   function disegnaTabellaTicket(doc, righe, x, y) {
     doc.setFontSize(13);
     doc.setTextColor(COLORE_TESTO);
     doc.text('Riscontro ticket per piatto (controllo incrociato con la matrice)', x, y);
     y += 14;
 
-    const colonne = ['Cassa', 'Piatto', 'Ticket contati', 'Vendite app', 'Scostamento'];
-    const larghezze = [70, 150, 90, 90, 100];
+    const colonne = ['Piatto', 'Consegnati', 'Contati', 'Vendite app', 'Scostamento'];
+    const larghezze = [150, 80, 80, 90, 115];
     doc.setFontSize(9);
     doc.setTextColor('#777777');
     let cx = x;
@@ -415,7 +407,7 @@ const Report = (function () {
       cx = x;
       doc.setFontSize(10);
       doc.setTextColor(COLORE_TESTO);
-      [r.cassa, r.nome_piatto, String(r.ticket_contati), String(r.quantita_app)].forEach((v, i) => {
+      [r.nome_piatto, String(r.ticket_consegnati), String(r.ticket_contati), String(r.quantita_app)].forEach((v, i) => {
         doc.text(v, cx, y);
         cx += larghezze[i];
       });
@@ -435,5 +427,66 @@ const Report = (function () {
     return y;
   }
 
-  return { generaPdf, generaPdfTicketCassa };
+  // Atteso / Contanti effettivi / Riscontro contabile / Persone servite:
+  // stessi campi già calcolati da getReportServata (worker-d1/src/chiusura.js),
+  // nessun nuovo calcolo qui. Stesso criterio "in pareggio"/"scarto ±€" e
+  // stesso bollino vettoriale già usati in disegnaTabellaChiusura.
+  function disegnaRiepilogoCassa(doc, datiCassa, x, y) {
+    const xValore = x + 220;
+    const righe = [
+      ['Atteso (fondo + vendite app)', formatEuro(datiCassa.incasso_atteso)],
+      ['Contanti effettivi', datiCassa.contante_contato !== null ? formatEuro(datiCassa.contante_contato) : '—'],
+      ['Persone servite', String(datiCassa.persone_servite)]
+    ];
+    doc.setFontSize(11);
+    righe.forEach(([label, valore]) => {
+      doc.setTextColor('#777777');
+      doc.text(label, x, y);
+      doc.setTextColor(COLORE_TESTO);
+      doc.text(valore, xValore, y);
+      y += 20;
+    });
+
+    doc.setTextColor('#777777');
+    doc.text('Riscontro contabile', x, y);
+    if (datiCassa.differenza === null) {
+      doc.setTextColor('#999999');
+      doc.text('cassa non chiusa', xValore, y);
+    } else if (Math.abs(datiCassa.differenza) < 0.01) {
+      disegnaBollinoStato(doc, xValore, y, true);
+      doc.setTextColor(COLORE_SUCCESSO);
+      doc.text('in pareggio', xValore + 10, y);
+    } else {
+      disegnaBollinoStato(doc, xValore, y, false);
+      doc.setTextColor(COLORE_ERRORE);
+      const segno = datiCassa.differenza > 0 ? '+' : '';
+      doc.text(`scarto ${segno}${formatEuro(datiCassa.differenza)}`, xValore + 10, y);
+    }
+    y += 28;
+
+    doc.setTextColor(COLORE_TESTO);
+    return y;
+  }
+
+  // PDF per singola cassa, generabile al momento della chiusura: riepilogo
+  // finanziario + riscontro ticket per piatto, entrambi su un documento a
+  // parte con solo i dati di quella cassa.
+  function generaPdfCassa(nomeCassa, datiCassa, righeTicket) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const margineX = 40;
+    let y = 50;
+    doc.setFontSize(16);
+    doc.setTextColor(COLORE_PRIMARIO);
+    doc.text(`Report cassa — ${nomeCassa}`, margineX, y);
+    y += 30;
+    y = disegnaRiepilogoCassa(doc, datiCassa, margineX, y);
+    if (righeTicket.length > 0) {
+      disegnaTabellaTicket(doc, righeTicket, margineX, y);
+    }
+    const slug = nomeCassa.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    doc.save(`report-cassa-${slug}-${new Date().toISOString().slice(0, 10)}.pdf`);
+  }
+
+  return { generaPdf, generaPdfCassa };
 })();

@@ -47,6 +47,7 @@ const ChiusuraCasse = (function () {
   function sezioneApertura(stato, edizioneId, ricarica) {
     const errore = el('div', { class: 'errore' }, []);
     const sezione = el('div', { class: 'sezione' }, [el('h2', {}, ['Apertura casse']), errore]);
+    const piatti = stato.piatti.slice().sort((a, b) => a.ordine_visualizzazione - b.ordine_visualizzazione);
 
     stato.casse.forEach((c) => {
       const input = el('input', {
@@ -54,11 +55,17 @@ const ChiusuraCasse = (function () {
         placeholder: 'Fondo iniziale (€)',
         value: c.fondo_iniziale !== null ? c.fondo_iniziale : ''
       });
-      const inputTicket = el('input', {
-        type: 'number', step: '1', min: '0',
-        placeholder: 'Ticket consegnati',
-        value: c.ticket_consegnati !== null ? c.ticket_consegnati : ''
-      });
+
+      const inputTicketPerPiatto = {};
+      const grigliaTicket = el('div', { class: 'griglia-ticket' }, piatti.map((p) => {
+        const inp = el('input', {
+          type: 'number', step: '1', min: '0',
+          value: c.ticket_consegnati[p.piatto_id] !== undefined ? c.ticket_consegnati[p.piatto_id] : ''
+        });
+        inputTicketPerPiatto[p.piatto_id] = inp;
+        return el('label', { class: 'campo-ticket' }, [p.nome_piatto, inp]);
+      }));
+
       const bottone = el('button', { type: 'button', class: 'bottone-secondario' }, [c.aperta ? 'Aggiorna' : 'Apri']);
 
       bottone.addEventListener('click', async () => {
@@ -67,15 +74,14 @@ const ChiusuraCasse = (function () {
           errore.textContent = 'Inserisci un fondo iniziale valido per ' + c.nome_visualizzato;
           return;
         }
-        const vTicket = Number(inputTicket.value);
-        if (inputTicket.value === '' || isNaN(vTicket) || vTicket < 0) {
-          errore.textContent = 'Inserisci un numero di ticket consegnati valido per ' + c.nome_visualizzato;
-          return;
-        }
         errore.textContent = '';
         bottone.disabled = true;
+        const ticketConsegnati = piatti.map((p) => ({
+          piatto_id: p.piatto_id,
+          ticket_consegnati: inputTicketPerPiatto[p.piatto_id].value === '' ? 0 : Number(inputTicketPerPiatto[p.piatto_id].value)
+        }));
         try {
-          await Api.apriCassa({ edizione_id: edizioneId, cassa: c.cassa, fondo_iniziale: v, ticket_consegnati: vTicket });
+          await Api.apriCassa({ edizione_id: edizioneId, cassa: c.cassa, fondo_iniziale: v, ticket_consegnati: ticketConsegnati });
           await ricarica();
         } catch (e) {
           errore.textContent = 'Apertura NON salvata: ' + e.message;
@@ -83,11 +89,15 @@ const ChiusuraCasse = (function () {
         }
       });
 
-      sezione.appendChild(el('div', { class: 'riga-cassa' }, [
-        el('strong', {}, [c.nome_visualizzato]),
-        el('span', { class: 'nota' }, [c.aperta ? `Aperta alle ${formatOra(c.orario_apertura)}` : 'Non ancora aperta']),
-        el('div', { class: 'riga-cassa-inputs' }, [input, inputTicket]),
-        bottone
+      sezione.appendChild(el('div', { class: 'blocco-apertura-cassa' }, [
+        el('div', { class: 'riga-cassa' }, [
+          el('strong', {}, [c.nome_visualizzato]),
+          el('span', { class: 'nota' }, [c.aperta ? `Aperta alle ${formatOra(c.orario_apertura)}` : 'Non ancora aperta']),
+          input,
+          bottone
+        ]),
+        el('div', { class: 'nota' }, ['Ticket consegnati per piatto:']),
+        grigliaTicket
       ]));
     });
 
@@ -125,32 +135,33 @@ const ChiusuraCasse = (function () {
       el('span', { class: 'riga-dato-valore' }, [formatEuro(datiCassa.incasso_atteso)])
     ]));
     box.appendChild(el('div', { class: 'riga-dato' }, [
-      el('span', {}, ['Contato']),
+      el('span', {}, ['Contanti effettivi']),
       el('span', { class: 'riga-dato-valore' }, [formatEuro(datiCassa.contante_contato)])
     ]));
     box.appendChild(el('div', { class: 'riga-dato' }, [
       el('span', {}, ['Riscontro contabile']),
       badgeDifferenza(datiCassa.differenza)
     ]));
-    if (c.ticket_consegnati !== null) {
-      box.appendChild(el('div', { class: 'riga-dato' }, [
-        el('span', {}, ['Ticket consegnati']),
-        el('span', { class: 'riga-dato-valore' }, [String(c.ticket_consegnati)])
-      ]));
-    }
+    box.appendChild(el('div', { class: 'riga-dato' }, [
+      el('span', {}, ['Persone servite']),
+      el('span', { class: 'riga-dato-valore' }, [String(datiCassa.persone_servite)])
+    ]));
 
     const righeTicket = report.riscontro_ticket.filter((r) => r.cassa === c.cassa);
     if (righeTicket.length > 0) {
-      const tabella = el('div', { class: 'griglia-ticket' }, righeTicket.map((r) => el('div', { class: 'riga-dato' }, [
-        el('span', {}, [r.nome_piatto]),
-        badgeDifferenzaTicket(r.differenza)
+      const tabella = el('div', { class: 'lista-ticket-riepilogo' }, righeTicket.map((r) => el('div', { class: 'riga-ticket-riepilogo' }, [
+        el('div', { class: 'riga-dato' }, [
+          el('span', {}, [r.nome_piatto]),
+          badgeDifferenzaTicket(r.differenza)
+        ]),
+        el('div', { class: 'nota' }, [`Consegnati ${r.ticket_consegnati} · Contati ${r.ticket_contati} · Vendite app ${r.quantita_app}`])
       ])));
       box.appendChild(el('div', { class: 'nota' }, ['Riscontro ticket per piatto (contati vs vendite app):']));
       box.appendChild(tabella);
 
-      const bottonePdf = el('button', { type: 'button', class: 'bottone-secondario' }, ['Genera PDF ticket']);
+      const bottonePdf = el('button', { type: 'button', class: 'bottone-secondario' }, ['Genera PDF cassa']);
       bottonePdf.addEventListener('click', () => {
-        Report.generaPdfTicketCassa(c.nome_visualizzato, righeTicket);
+        Report.generaPdfCassa(c.nome_visualizzato, datiCassa, righeTicket);
       });
       box.appendChild(bottonePdf);
     }
